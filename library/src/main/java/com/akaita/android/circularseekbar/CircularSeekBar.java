@@ -11,6 +11,7 @@ import android.graphics.PointF;
 import android.graphics.RectF;
 import android.support.annotation.FloatRange;
 import android.support.annotation.IntRange;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -259,43 +260,17 @@ public class CircularSeekBar extends View implements OnGestureListener {
         return percent / 100f * 360f;
     }
 
-    /**
-     * paint used for drawing the text
-     */
-    private static final int PAINT_TEXT = 1;
-
-    /**
-     * paint representing the value bar
-     */
-    private static final int PAINT_ARC = 2;
-
-    /**
-     * paint representing the inner (by default white) area
-     */
-    private static final int PAINT_INNER = 3;
-
-    /**
-     * sets the given paint object to be used instead of the original/default
-     * one
-     *
-     * @param which, e.g. CircleDisplay.PAINT_TEXT to set a new text paint
-     * @param p
-     */
-    public void setPaint(int which, Paint p) {
-
-        switch (which) {
-            case PAINT_ARC:
-                mArcPaint = p;
-                break;
-            case PAINT_INNER:
-                mInnerCirclePaint = p;
-                break;
-            case PAINT_TEXT:
-                mTextPaint = p;
-                break;
-        }
+    public void setTextPaint(@NonNull Paint p) {
+        mTextPaint = p;
     }
 
+    public void setArcPaint(@NonNull Paint p) {
+        mArcPaint = p;
+    }
+
+    public void setInnerCirclePaint(@NonNull Paint p) {
+        mInnerCirclePaint = p;
+    }
 
     /**
      * returns the center point of the view in pixels
