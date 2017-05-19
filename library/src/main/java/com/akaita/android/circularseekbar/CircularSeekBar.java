@@ -27,8 +27,6 @@ import java.text.DecimalFormat;
  * selecting values onTouch().
  */
 public class CircularSeekBar extends View implements OnGestureListener {
-    private static final String LOG_TAG = CircularSeekBar.class.getSimpleName();
-
     /**
      * listener for callbacks when selecting values ontouch
      *
@@ -46,15 +44,15 @@ public class CircularSeekBar extends View implements OnGestureListener {
     }
 
     // settable by the client
-    private OnCircularSeekBarChangeListener mOnCircularSeekBarChangeListener;
-    private OnCenterClickedListener mOnCenterClickedListener;
+    private @Nullable OnCircularSeekBarChangeListener mOnCircularSeekBarChangeListener = null;
+    private @Nullable OnCenterClickedListener mOnCenterClickedListener = null;
     private boolean mShowTouch = false;
     private float mProgress = 0f;
     private float mMinValue = 0f;
     private float mMaxValue = 100f;
     private boolean mEnabled = true;
     private boolean mShowText = true;
-    private String mCustomText = null;
+    private @Nullable String mCustomText = null;
     private boolean mShowInnerCircle = true;
     private float mRingWidthPercent = 50f;
 
@@ -160,7 +158,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
             drawInnerCircle(canvas);
 
         if (mShowText) {
-
             if (mCustomText != null)
                 drawCustomText(canvas);
             else
@@ -260,18 +257,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
         return percent / 100f * 360f;
     }
 
-    public void setTextPaint(@NonNull Paint p) {
-        mTextPaint = p;
-    }
-
-    public void setArcPaint(@NonNull Paint p) {
-        mArcPaint = p;
-    }
-
-    public void setInnerCirclePaint(@NonNull Paint p) {
-        mInnerCirclePaint = p;
-    }
-
     /**
      * returns the center point of the view in pixels
      *
@@ -293,11 +278,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
     @Override
     public boolean onTouchEvent(MotionEvent e) {
         if (mEnabled) {
-
-            if (mOnCircularSeekBarChangeListener == null)
-                Log.w(LOG_TAG,
-                        "No OnCircularSeekBarChangeListener specified. Use setSelectionListener(...) to set a listener for callbacks when selecting values.");
-
             // if the detector recognized a gesture, consume it
             if (mGestureDetector.onTouchEvent(e))
                 return true;
@@ -618,4 +598,15 @@ public class CircularSeekBar extends View implements OnGestureListener {
         mEnabled = enabled;
     }
 
+    public void setTextPaint(@NonNull Paint p) {
+        mTextPaint = p;
+    }
+
+    public void setArcPaint(@NonNull Paint p) {
+        mArcPaint = p;
+    }
+
+    public void setInnerCirclePaint(@NonNull Paint p) {
+        mInnerCirclePaint = p;
+    }
 }
