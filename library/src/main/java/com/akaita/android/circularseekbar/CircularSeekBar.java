@@ -33,18 +33,20 @@ public class CircularSeekBar extends View implements OnGestureListener {
      *
      */
     public interface OnCircularSeekBarChangeListener {
-
-        void onProgressChanged(CircularSeekBar seekBar, float value, boolean fromUser);
+        void onProgressChanged(CircularSeekBar seekBar, float progress, boolean fromUser);
 
         void onStartTrackingTouch(CircularSeekBar seekBar);
 
         void onStopTrackingTouch(CircularSeekBar seekBar);
+    }
 
-        void onCentreClicked(CircularSeekBar seekBar);
+    public interface OnCenterClickedListener {
+        void onCenterClicked(CircularSeekBar seekBar, float progress);
     }
 
     // settable by the client
-    private OnCircularSeekBarChangeListener mListener;
+    private OnCircularSeekBarChangeListener mOnCircularSeekBarChangeListener;
+    private OnCenterClickedListener mOnCenterClickedListener;
     private boolean mShowTouch = false;
     private float mProgress = 0f;
     private float mMinValue = 0f;
@@ -317,7 +319,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
     public boolean onTouchEvent(MotionEvent e) {
         if (mEnabled) {
 
-            if (mListener == null)
+            if (mOnCircularSeekBarChangeListener == null)
                 Log.w(LOG_TAG,
                         "No OnCircularSeekBarChangeListener specified. Use setSelectionListener(...) to set a listener for callbacks when selecting values.");
 
@@ -344,24 +346,24 @@ public class CircularSeekBar extends View implements OnGestureListener {
                         mAngularVelocityTracker.clear();
                         updateValue(x, y, mAngularVelocityTracker.getAngularVelocity());
                         invalidate();
-                        if (mListener != null)
-                            mListener.onStartTrackingTouch(this);
+                        if (mOnCircularSeekBarChangeListener != null)
+                            mOnCircularSeekBarChangeListener.onStartTrackingTouch(this);
                         break;
                     case MotionEvent.ACTION_MOVE:
                         mShowTouch = true;
                         mAngularVelocityTracker.addMovement(e);
                         updateValue(x, y, mAngularVelocityTracker.getAngularVelocity());
                         invalidate();
-                        if (mListener != null)
-                            mListener.onProgressChanged(this, mProgress, true);
+                        if (mOnCircularSeekBarChangeListener != null)
+                            mOnCircularSeekBarChangeListener.onProgressChanged(this, mProgress, true);
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         mShowTouch = false;
                         mAngularVelocityTracker.clear();
                         invalidate();
-                        if (mListener != null)
-                            mListener.onStopTrackingTouch(this);
+                        if (mOnCircularSeekBarChangeListener != null)
+                            mOnCircularSeekBarChangeListener.onStopTrackingTouch(this);
                         break;
                 }
             } else {
@@ -408,8 +410,8 @@ public class CircularSeekBar extends View implements OnGestureListener {
         // touch gestures only work when touches are made exactly on the
         // bar/arc
         if (distance <= r - r * mRingWidthPercent / 100) {
-            if (mListener != null)
-                mListener.onCentreClicked(this);
+            if (mOnCenterClickedListener != null)
+                mOnCenterClickedListener.onCenterClicked(this, mProgress);
         }
         return false;
     }
@@ -592,6 +594,9 @@ public class CircularSeekBar extends View implements OnGestureListener {
     public void setProgress(float progress) {
         mAngle = calcAngle(progress / mMaxValue * 100f);
         mProgress = progress;
+        if (mOnCircularSeekBarChangeListener!=null) {
+            mOnCircularSeekBarChangeListener.onProgressChanged(this, mProgress, false);
+        }
     }
 
     /**
@@ -609,8 +614,12 @@ public class CircularSeekBar extends View implements OnGestureListener {
      *
      * @param l
      */
-    public void setSelectionListener(@Nullable OnCircularSeekBarChangeListener l) {
-        mListener = l;
+    public void setOnCircularSeekBarChangeListener(@Nullable OnCircularSeekBarChangeListener l) {
+        mOnCircularSeekBarChangeListener = l;
+    }
+
+    public void setOnCenterClickedListener(@Nullable OnCenterClickedListener l) {
+        mOnCenterClickedListener = l;
     }
 
     /**
