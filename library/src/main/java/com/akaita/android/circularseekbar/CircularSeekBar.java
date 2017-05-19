@@ -2,6 +2,7 @@ package com.akaita.android.circularseekbar;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -9,6 +10,9 @@ import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
 import android.graphics.PointF;
 import android.graphics.RectF;
+import android.support.annotation.FloatRange;
+import android.support.annotation.IntRange;
+import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -24,13 +28,19 @@ import java.text.DecimalFormat;
  * selecting values onTouch().
  */
 public class CircularSeekBar extends View implements OnGestureListener {
-
     private static final String LOG_TAG = CircularSeekBar.class.getSimpleName();
 
-    /**
-     * if enabled, should show the finger-tracker
-     */
-    private boolean mTouchedDown = false;
+    // settable by the client
+    private boolean mShowTouch = false;
+    private float mValue = 0f;
+    private float mMinValue = 0f;
+    private float mMaxValue = 100f;
+    private boolean mEnabled = true;
+    private boolean mShowText = true;
+    private String mCustomText = null;
+    private boolean mShowInnerCircle = true;
+    private float mRingWidthPercent = 50f;
+
 
     /**
      * tracks movements to calculate angular speed
@@ -42,40 +52,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
      */
     private float mAngle = 0f;
 
-    /**
-     * the currently displayed value, can be percent or actual value
-     */
-    private float mValue = 0f;
-
-    /**
-     * the minimum displayable value, depends on the set value
-     */
-    private float mMinValue = 0f;
-
-    /**
-     * the maximum displayable value, depends on the set value
-     */
-    private float mMaxValue = 0f;
-
-    /**
-     * percent of the maximum width the arc takes
-     */
-    private float mValueWidthPercent = 50f;
-
-    /**
-     * if enabled, the inner circle is drawn
-     */
-    private boolean mDrawInner = true;
-
-    /**
-     * if enabled, the center text is drawn
-     */
-    private boolean mDrawText = true;
-
-    /**
-     * if enabled, touching and therefore selecting values is enabled
-     */
-    private boolean mTouchEnabled = true;
 
     /**
      * represents the alpha value used for the remainder bar
@@ -88,11 +64,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
     private DecimalFormat mFormatValue = new DecimalFormat("###,###,###,##0.0");
 
     /**
-     * array that contains values for the custom-text
-     */
-    private String mCustomText = null;
-
-    /**
      * rect object that represents the bounds of the view, needed for drawing
      * the circle
      */
@@ -102,24 +73,38 @@ public class CircularSeekBar extends View implements OnGestureListener {
     private Paint mInnerCirclePaint;
     private Paint mTextPaint;
 
+    //region Constructor
     public CircularSeekBar(Context context) {
         super(context);
-        init();
+        init(context, null, 0);
     }
 
-    public CircularSeekBar(Context context, AttributeSet attrs) {
+    public CircularSeekBar(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        init();
+        init(context, attrs, 0);
     }
 
-    public CircularSeekBar(Context context, AttributeSet attrs, int defStyleAttr) {
+    public CircularSeekBar(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
+        init(context, attrs, defStyleAttr);
     }
+    //endregion
 
-    private void init() {
+    private void init(Context context, @Nullable AttributeSet attrs, int defStyle) {
+        TypedArray a = context.getTheme().obtainStyledAttributes(
+                attrs,
+                R.styleable.CircularSeekBar,
+                0, 0);
 
-        mBoxSetup = false;
+        try {
+            boolean showText = a.getBoolean(R.styleable.CircularSeekBar_showText, false);
+            int textPos = a.getInteger(R.styleable.CircularSeekBar_labelPosition, 0);
+        } finally {
+            a.recycle();
+        }
+
+
+
 
         mArcPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mArcPaint.setStyle(Style.FILL);
@@ -138,30 +123,20 @@ public class CircularSeekBar extends View implements OnGestureListener {
         mGestureDetector = new GestureDetector(getContext(), this);
     }
 
-    /**
-     * boolean flag that indicates if the box has been setup
-     */
-    private boolean mBoxSetup = false;
-
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        if (!mBoxSetup) {
-            mBoxSetup = true;
-            initBox();
-        }
-
         drawWholeCircle(canvas);
 
-        if (mTouchedDown) {
-            drawValue(canvas);
+        if (mShowTouch) {
+            drawValueArc(canvas);
         }
 
-        if (mDrawInner)
+        if (mShowInnerCircle)
             drawInnerCircle(canvas);
 
-        if (mDrawText) {
+        if (mShowText) {
 
             if (mCustomText != null)
                 drawCustomText(canvas);
@@ -199,71 +174,29 @@ public class CircularSeekBar extends View implements OnGestureListener {
      */
     private void drawWholeCircle(Canvas c) {
         mArcPaint.setAlpha(mDimAlpha);
-
-        float r = getOuterCircleRadius();
-
-        c.drawCircle(getWidth() / 2, getHeight() / 2, r, mArcPaint);
+        c.drawCircle(getWidth() / 2, getHeight() / 2, getOuterCircleRadius(), mArcPaint);
     }
 
-    /**
-     * draws the inner circle of the view
-     *
-     * @param c
-     */
     private void drawInnerCircle(Canvas c) {
         c.drawCircle(getWidth() / 2, getHeight() / 2, getInnerCircleRadius(), mInnerCirclePaint);
     }
 
-    /**
-     * draws the actual value slice/arc
-     *
-     * @param c
-     */
-    private void drawValue(Canvas c) {
-
+    private void drawValueArc(Canvas c) {
         mArcPaint.setAlpha(255);
-
         c.drawArc(mCircleBox, mAngle - 105, 30, true, mArcPaint);
-
-        // Log.i(LOG_TAG, "CircleBox bounds: " + mCircleBox.toString() +
-        // ", Angle: " + angle + ", StartAngle: " + mStartAngle);
     }
 
     /**
      * sets up the bounds of the view
      */
     private void initBox() {
-
         int width = getWidth();
         int height = getHeight();
 
         float diameter = getDiameter();
 
-        mCircleBox = new RectF(width / 2 - diameter / 2, height / 2 - diameter / 2, width / 2
+        mCircleBox.set(width / 2 - diameter / 2, height / 2 - diameter / 2, width / 2
                 + diameter / 2, height / 2 + diameter / 2);
-    }
-
-    public void setMin(float min) {
-        mMinValue = min;
-    }
-
-    public void setMax(float max) {
-        mMaxValue = max;
-    }
-
-    public void setProgress(float progress) {
-        mAngle = calcAngle(progress / mMaxValue * 100f);
-        mValue = progress;
-    }
-
-    /**
-     * Returns the currently displayed value from the view. Depending on the
-     * used method to show the value, this value can be percent or actual value.
-     *
-     * @return
-     */
-    public float getValue() {
-        return mValue;
     }
 
     /**
@@ -291,7 +224,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
      */
     private float getInnerCircleRadius() {
         return getOuterCircleRadius() / 100f
-                * (100f - mValueWidthPercent);
+                * (100f - mRingWidthPercent);
     }
 
     /**
@@ -302,108 +235,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
      */
     private float calcAngle(float percent) {
         return percent / 100f * 360f;
-    }
-
-    /**
-     * set this to true to draw the inner circle, default: true
-     *
-     * @param enabled
-     */
-    public void setDrawInnerCircle(boolean enabled) {
-        mDrawInner = enabled;
-    }
-
-    /**
-     * returns true if drawing the inner circle is enabled, false if not
-     *
-     * @return
-     */
-    public boolean isDrawInnerCircleEnabled() {
-        return mDrawInner;
-    }
-
-    /**
-     * set the drawing of the center text to be enabled or not
-     *
-     * @param enabled
-     */
-    public void setDrawText(boolean enabled) {
-        mDrawText = enabled;
-    }
-
-    /**
-     * returns true if drawing the text in the center is enabled
-     *
-     * @return
-     */
-    public boolean isDrawTextEnabled() {
-        return mDrawText;
-    }
-
-    /**
-     * set the color of the arc
-     *
-     * @param color
-     */
-    public void setColor(int color) {
-        mArcPaint.setColor(color);
-    }
-
-    /**
-     * set the size of the center text in dp
-     *
-     * @param size
-     */
-    public void setTextSize(float size) {
-        mTextPaint.setTextSize(Utils.convertDpToPixel(getResources(), size));
-    }
-
-    /**
-     * set the thickness of the value bar, default 50%
-     *
-     * @param percentFromTotalWidth
-     */
-    public void setRingWidthPercent(float percentFromTotalWidth) {
-        mValueWidthPercent = percentFromTotalWidth;
-    }
-
-    /**
-     * Set an array of custom texts to be drawn instead of the value in the
-     * center of the CircleDisplay. If set to null, the custom text will be
-     * reset and the value will be drawn. Make sure the length of the array corresponds with the maximum number of steps (set with setStepSize(float stepsize).
-     *
-     * @param custom
-     */
-    public void setCustomText(String custom) {
-        // TODO make this a object with {level, text}
-        mCustomText = custom;
-    }
-
-    /**
-     * sets the number of digits used to format values
-     *
-     * @param digits
-     */
-    public void setFormatDigits(int digits) {
-
-        StringBuilder b = new StringBuilder();
-        for (int i = 0; i < digits; i++) {
-            if (i == 0)
-                b.append(".");
-            b.append("0");
-        }
-
-        mFormatValue = new DecimalFormat("###,###,###,##0" + b.toString());
-    }
-
-    /**
-     * set the aplha value to be used for the remainder of the arc, default 80
-     * (use value between 0 and 255)
-     *
-     * @param alpha
-     */
-    public void setDimAlpha(int alpha) {
-        mDimAlpha = alpha;
     }
 
     /**
@@ -454,37 +285,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
     }
 
     /**
-     * Enable touch gestures on the circle-display. If enabled, selecting values
-     * onTouch() is possible. Set a onCircularSeekBarChangeListener to retrieve selected
-     * values. Do not forget to set a value before selecting values. By default
-     * the maxvalue is 0f and therefore nothing can be selected.
-     *
-     * @param enabled
-     */
-    public void setTouchEnabled(boolean enabled) {
-        mTouchEnabled = enabled;
-    }
-
-    /**
-     * returns true if touch-gestures are enabled, false if not
-     *
-     * @return
-     */
-    public boolean isTouchEnabled() {
-        return mTouchEnabled;
-    }
-
-    /**
-     * set a selection listener for the circle-display that is called whenever a
-     * value is selected onTouch()
-     *
-     * @param l
-     */
-    public void setSelectionListener(onCircularSeekBarChangeListener l) {
-        mListener = l;
-    }
-
-    /**
      * listener called when a value has been selected on touch
      */
     private onCircularSeekBarChangeListener mListener;
@@ -498,12 +298,14 @@ public class CircularSeekBar extends View implements OnGestureListener {
     protected void onSizeChanged(int xNew, int yNew, int xOld, int yOld){
         super.onSizeChanged(xNew, yNew, xOld, yOld);
 
+        initBox();
+
         mAngularVelocityTracker = new AngularVelocityTracker(getCenter().x, getCenter().y);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent e) {
-        if (mTouchEnabled) {
+        if (mEnabled) {
 
             if (mListener == null)
                 Log.w(LOG_TAG,
@@ -528,7 +330,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
                 switch (e.getAction()) {
 
                     case MotionEvent.ACTION_DOWN:
-                        mTouchedDown = true;
+                        mShowTouch = true;
                         mAngularVelocityTracker.clear();
                         updateValue(x, y, mAngularVelocityTracker.getAngularVelocity());
                         invalidate();
@@ -536,7 +338,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
                             mListener.onStartTrackingTouch(this);
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        mTouchedDown = true;
+                        mShowTouch = true;
                         mAngularVelocityTracker.addMovement(e);
                         updateValue(x, y, mAngularVelocityTracker.getAngularVelocity());
                         invalidate();
@@ -544,7 +346,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
                             mListener.onProgressChanged(this, mValue, true);
                         break;
                     case MotionEvent.ACTION_UP:
-                        mTouchedDown = false;
+                        mShowTouch = false;
                         mAngularVelocityTracker.clear();
                         invalidate();
                         if (mListener != null)
@@ -552,7 +354,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
                         break;
                 }
             } else {
-                mTouchedDown = false;
+                mShowTouch = false;
                 mAngularVelocityTracker.clear();
                 invalidate();
             }
@@ -594,7 +396,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
 
         // touch gestures only work when touches are made exactly on the
         // bar/arc
-        if (distance <= r - r * mValueWidthPercent / 100) {
+        if (distance <= r - r * mRingWidthPercent / 100) {
             if (mListener != null)
                 mListener.onCentreClicked(this);
         }
@@ -612,16 +414,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
     private float getAngleForPoint(float x, float y) {
         PointF c = getCenter();
         return (float) -Math.toDegrees(Math.atan2(c.x - x, c.y - y));
-    }
-
-    /**
-     * returns the angle representing the given value
-     *
-     * @param value
-     * @return
-     */
-    public float getAngleForValue(float value) {
-        return value / mMaxValue * 360f;
     }
 
     /**
@@ -697,4 +489,171 @@ public class CircularSeekBar extends View implements OnGestureListener {
     public void onShowPress(MotionEvent e) {
         // TODO Auto-generated method stub
     }
+
+    /**
+     * returns the angle representing the given value
+     *
+     * @param value
+     * @return
+     */
+    public float getAngleForValue(float value) {
+        return value / mMaxValue * 360f;
+    }
+
+    /**
+     * Returns the currently displayed value from the view. Depending on the
+     * used method to show the value, this value can be percent or actual value.
+     *
+     * @return
+     */
+    public float getValue() {
+        return mValue;
+    }
+
+    /**
+     * returns true if drawing the inner circle is enabled, false if not
+     *
+     * @return
+     */
+    public boolean isDrawInnerCircleEnabled() {
+        return mShowInnerCircle;
+    }
+
+    /**
+     * returns true if drawing the text in the center is enabled
+     *
+     * @return
+     */
+    public boolean isDrawTextEnabled() {
+        return mShowText;
+    }
+
+    /**
+     * returns true if touch-gestures are enabled, false if not
+     *
+     * @return
+     */
+    public boolean isTouchEnabled() {
+        return mEnabled;
+    }
+
+    /**
+     * set the color of the arc
+     *
+     * @param color
+     */
+    public void setColor(int color) {
+        mArcPaint.setColor(color);
+    }
+
+    /**
+     * Set an array of custom texts to be drawn instead of the value in the
+     * center of the CircleDisplay. If set to null, the custom text will be
+     * reset and the value will be drawn. Make sure the length of the array corresponds with the maximum number of steps (set with setStepSize(float stepsize).
+     *
+     * @param custom
+     */
+    public void setCustomText(String custom) {
+        // TODO make this a object with {level, text}
+        mCustomText = custom;
+    }
+
+    /**
+     * set the alpha value to be used for the remainder of the arc, default 80
+     * (use value between 0 and 255)
+     *
+     * @param alpha
+     */
+    public void setDimAlpha(@IntRange(from=0,to=255) int alpha) {
+        mDimAlpha = alpha;
+    }
+
+    /**
+     * set this to true to draw the inner circle, default: true
+     *
+     * @param enabled
+     */
+    public void setDrawInnerCircle(boolean enabled) {
+        mShowInnerCircle = enabled;
+    }
+
+    /**
+     * set the drawing of the center text to be enabled or not
+     *
+     * @param enabled
+     */
+    public void setDrawText(boolean enabled) {
+        mShowText = enabled;
+    }
+
+    /**
+     * sets the number of digits used to format values
+     *
+     * @param digits
+     */
+    public void setFormatDigits(int digits) {
+
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < digits; i++) {
+            if (i == 0)
+                b.append(".");
+            b.append("0");
+        }
+
+        mFormatValue = new DecimalFormat("###,###,###,##0" + b.toString());
+    }
+
+    public void setMax(float max) {
+        mMaxValue = max;
+    }
+
+    public void setMin(float min) {
+        mMinValue = min;
+    }
+
+    public void setProgress(float progress) {
+        mAngle = calcAngle(progress / mMaxValue * 100f);
+        mValue = progress;
+    }
+
+    /**
+     * set the thickness of the value bar, default 50%
+     *
+     * @param percentFromTotalWidth
+     */
+    public void setRingWidthPercent(@FloatRange(from=0f,to=100f) float percentFromTotalWidth) {
+        mRingWidthPercent = percentFromTotalWidth;
+    }
+
+    /**
+     * set a selection listener for the circle-display that is called whenever a
+     * value is selected onTouch()
+     *
+     * @param l
+     */
+    public void setSelectionListener(@Nullable onCircularSeekBarChangeListener l) {
+        mListener = l;
+    }
+
+    /**
+     * set the size of the center text in dp
+     *
+     * @param size
+     */
+    public void setTextSize(float size) {
+        mTextPaint.setTextSize(Utils.convertDpToPixel(getResources(), size));
+    }
+
+    /**
+     * Enable touch gestures on the circle-display. If enabled, selecting values
+     * onTouch() is possible. Set a onCircularSeekBarChangeListener to retrieve selected
+     * values. Do not forget to set a value before selecting values. By default
+     * the maxvalue is 0f and therefore nothing can be selected.
+     *
+     * @param enabled
+     */
+    public void setTouchEnabled(boolean enabled) {
+        mEnabled = enabled;
+    }
+
 }
