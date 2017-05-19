@@ -1,7 +1,6 @@
 package com.akaita.android.circularseekbar;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -14,7 +13,6 @@ import android.support.annotation.FloatRange;
 import android.support.annotation.IntRange;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.OnGestureListener;
@@ -30,9 +28,25 @@ import java.text.DecimalFormat;
 public class CircularSeekBar extends View implements OnGestureListener {
     private static final String LOG_TAG = CircularSeekBar.class.getSimpleName();
 
+    /**
+     * listener for callbacks when selecting values ontouch
+     *
+     */
+    public interface OnCircularSeekBarChangeListener {
+
+        void onProgressChanged(CircularSeekBar seekBar, float value, boolean fromUser);
+
+        void onStartTrackingTouch(CircularSeekBar seekBar);
+
+        void onStopTrackingTouch(CircularSeekBar seekBar);
+
+        void onCentreClicked(CircularSeekBar seekBar);
+    }
+
     // settable by the client
+    private OnCircularSeekBarChangeListener mListener;
     private boolean mShowTouch = false;
-    private float mValue = 0f;
+    private float mProgress = 0f;
     private float mMinValue = 0f;
     private float mMaxValue = 100f;
     private boolean mEnabled = true;
@@ -40,6 +54,12 @@ public class CircularSeekBar extends View implements OnGestureListener {
     private String mCustomText = null;
     private boolean mShowInnerCircle = true;
     private float mRingWidthPercent = 50f;
+
+
+    /**
+     * gesturedetector for recognizing single-taps
+     */
+    private GestureDetector mGestureDetector;
 
 
     /**
@@ -152,7 +172,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
      */
     private void drawText(Canvas c) {
         if (mAngularVelocityTracker != null) {
-            c.drawText(mFormatValue.format(mValue), getWidth() / 2,
+            c.drawText(mFormatValue.format(mProgress), getWidth() / 2,
                     getHeight() / 2 + mTextPaint.descent(), mTextPaint);
         }
     }
@@ -284,16 +304,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
         return new PointF(getWidth() / 2, getHeight() / 2);
     }
 
-    /**
-     * listener called when a value has been selected on touch
-     */
-    private onCircularSeekBarChangeListener mListener;
-
-    /**
-     * gesturedetector for recognizing single-taps
-     */
-    private GestureDetector mGestureDetector;
-
     @Override
     protected void onSizeChanged(int xNew, int yNew, int xOld, int yOld){
         super.onSizeChanged(xNew, yNew, xOld, yOld);
@@ -309,7 +319,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
 
             if (mListener == null)
                 Log.w(LOG_TAG,
-                        "No onCircularSeekBarChangeListener specified. Use setSelectionListener(...) to set a listener for callbacks when selecting values.");
+                        "No OnCircularSeekBarChangeListener specified. Use setSelectionListener(...) to set a listener for callbacks when selecting values.");
 
             // if the detector recognized a gesture, consume it
             if (mGestureDetector.onTouchEvent(e))
@@ -343,9 +353,10 @@ public class CircularSeekBar extends View implements OnGestureListener {
                         updateValue(x, y, mAngularVelocityTracker.getAngularVelocity());
                         invalidate();
                         if (mListener != null)
-                            mListener.onProgressChanged(this, mValue, true);
+                            mListener.onProgressChanged(this, mProgress, true);
                         break;
                     case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
                         mShowTouch = false;
                         mAngularVelocityTracker.clear();
                         invalidate();
@@ -377,11 +388,11 @@ public class CircularSeekBar extends View implements OnGestureListener {
         float angle = getAngleForPoint(x, y);
 
         // calculate the new value depending on angle
-        float newVal = mValue + mMaxValue / 100 * speed;
+        float newVal = mProgress + mMaxValue / 100 * speed;
         newVal = Math.min(newVal, mMaxValue);
         newVal = Math.max(newVal, mMinValue);
 
-        mValue = newVal;
+        mProgress = newVal;
         mAngle = angle;
     }
 
@@ -429,39 +440,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
         return (float) Math.sqrt(Math.pow(x - c.x, 2.0) + Math.pow(y - c.y, 2.0));
     }
 
-    /**
-     * listener for callbacks when selecting values ontouch
-     *
-     * @author Philipp Jahoda
-     */
-    public interface onCircularSeekBarChangeListener {
-
-        void onProgressChanged(CircularSeekBar seekBar, float value, boolean fromUser);
-
-        void onStartTrackingTouch(CircularSeekBar seekBar);
-
-        void onStopTrackingTouch(CircularSeekBar seekBar);
-
-        void onCentreClicked(CircularSeekBar seekBar);
-    }
-
-    public static abstract class Utils {
-
-        /**
-         * This method converts dp unit to equivalent pixels, depending on
-         * device density.
-         *
-         * @param dp A value in dp (density independent pixels) unit. Which we
-         *           need to convert into pixels
-         * @return A float value to represent px equivalent to dp depending on
-         * device density
-         */
-        public static float convertDpToPixel(Resources r, float dp) {
-            DisplayMetrics metrics = r.getDisplayMetrics();
-            return dp * (metrics.densityDpi / 160f);
-        }
-    }
-
     @Override
     public boolean onDown(MotionEvent e) {
         // TODO Auto-generated method stub
@@ -506,8 +484,8 @@ public class CircularSeekBar extends View implements OnGestureListener {
      *
      * @return
      */
-    public float getValue() {
-        return mValue;
+    public float getProgress() {
+        return mProgress;
     }
 
     /**
@@ -613,7 +591,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
 
     public void setProgress(float progress) {
         mAngle = calcAngle(progress / mMaxValue * 100f);
-        mValue = progress;
+        mProgress = progress;
     }
 
     /**
@@ -631,7 +609,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
      *
      * @param l
      */
-    public void setSelectionListener(@Nullable onCircularSeekBarChangeListener l) {
+    public void setSelectionListener(@Nullable OnCircularSeekBarChangeListener l) {
         mListener = l;
     }
 
@@ -646,7 +624,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
 
     /**
      * Enable touch gestures on the circle-display. If enabled, selecting values
-     * onTouch() is possible. Set a onCircularSeekBarChangeListener to retrieve selected
+     * onTouch() is possible. Set a OnCircularSeekBarChangeListener to retrieve selected
      * values. Do not forget to set a value before selecting values. By default
      * the maxvalue is 0f and therefore nothing can be selected.
      *
