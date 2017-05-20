@@ -20,6 +20,9 @@
         app:max="20"
         app:progress="15"
         app:showProgressText="true"
-        app:ringWidth="0.5"/>
+        app:ringWidth="0.5"
+        app:showInnerCircle="true"
+        />
+        <!-- app:progressText="xxx" -->
 
 </android.support.constraint.ConstraintLayout>

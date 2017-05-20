@@ -52,15 +52,17 @@ public class CircularSeekBar extends View implements OnGestureListener {
     private float mProgress = 0f;
     private boolean mShowText = true;
     private @FloatRange(from=0,to=1) float mRingWidthFactor = 0.5f;
-    // settable by the client UNDONE
-    private @Nullable String mCustomText = null;
+    private @Nullable String mProgressText = null;
     private boolean mShowInnerCircle = true;
+    // settable by the client UNDONE
+    private int mArcColor = Color.rgb(192, 255, 140); //LIGHT LIME
     private Paint mArcPaint;
     private Paint mInnerCirclePaint;
+    private int mInnerCircleColor = Color.WHITE;
     private Paint mTextPaint;
+    private int mTextColor = Color.BLACK;
     //TODO configurable speed factor
 
-    private static int COLOR_LIGHT_LIME = Color.rgb(192, 255, 140);
     private boolean mTouching = false;
 
     /**
@@ -128,6 +130,8 @@ public class CircularSeekBar extends View implements OnGestureListener {
             mProgress = a.getFloat(R.styleable.CircularSeekBar_progress, mProgress);
             mShowText = a.getBoolean(R.styleable.CircularSeekBar_showProgressText, mShowText);
             mRingWidthFactor = a.getFloat(R.styleable.CircularSeekBar_ringWidth, mRingWidthFactor);
+            mProgressText = a.getString(R.styleable.CircularSeekBar_progressText);
+            mShowInnerCircle = a.getBoolean(R.styleable.CircularSeekBar_showInnerCircle, mShowInnerCircle);
 
             int textPos = a.getInteger(R.styleable.CircularSeekBar_labelPosition, 0);
         } finally {
@@ -139,16 +143,16 @@ public class CircularSeekBar extends View implements OnGestureListener {
 
         mArcPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mArcPaint.setStyle(Style.FILL);
-        mArcPaint.setColor(COLOR_LIGHT_LIME);
+        mArcPaint.setColor(mArcColor);
 
         mInnerCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mInnerCirclePaint.setStyle(Style.FILL);
-        mInnerCirclePaint.setColor(Color.WHITE);
+        mInnerCirclePaint.setColor(mInnerCircleColor);
 
         mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setStyle(Style.STROKE);
         mTextPaint.setTextAlign(Align.CENTER);
-        mTextPaint.setColor(Color.BLACK);
+        mTextPaint.setColor(mTextColor);
         mTextPaint.setTextSize(Utils.convertDpToPixel(getResources(), 24f));
 
         mGestureDetector = new GestureDetector(getContext(), this);
@@ -168,7 +172,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
             drawInnerCircle(canvas);
 
         if (mShowText) {
-            if (mCustomText != null)
+            if (mProgressText != null)
                 drawCustomText(canvas);
             else
                 drawText(canvas);
@@ -193,7 +197,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
      * @param c
      */
     private void drawCustomText(Canvas c) {
-        c.drawText(mCustomText, getWidth() / 2,
+        c.drawText(mProgressText, getWidth() / 2,
                 getHeight() / 2 + mTextPaint.descent(), mTextPaint);
     }
 
@@ -445,15 +449,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
     }
 
     /**
-     * returns true if drawing the inner circle is enabled, false if not
-     *
-     * @return
-     */
-    public boolean isDrawInnerCircleEnabled() {
-        return mShowInnerCircle;
-    }
-
-    /**
      * returns true if drawing the text in the center is enabled
      *
      * @return
@@ -481,18 +476,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
     }
 
     /**
-     * Set an array of custom texts to be drawn instead of the value in the
-     * center of the CircleDisplay. If set to null, the custom text will be
-     * reset and the value will be drawn. Make sure the length of the array corresponds with the maximum number of steps (set with setStepSize(float stepsize).
-     *
-     * @param custom
-     */
-    public void setCustomText(String custom) {
-        // TODO make this a object with {level, text}
-        mCustomText = custom;
-    }
-
-    /**
      * set the alpha value to be used for the remainder of the arc, default 80
      * (use value between 0 and 255)
      *
@@ -500,15 +483,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
      */
     public void setDimAlpha(@IntRange(from=0,to=255) int alpha) {
         mDimAlpha = alpha;
-    }
-
-    /**
-     * set this to true to draw the inner circle, default: true
-     *
-     * @param enabled
-     */
-    public void setDrawInnerCircle(boolean enabled) {
-        mShowInnerCircle = enabled;
     }
 
     /**
@@ -717,4 +691,42 @@ public class CircularSeekBar extends View implements OnGestureListener {
     public float getRingWidthFactor() {
         return mRingWidthFactor;
     }
+
+    /**
+     * Set an array of custom texts to be drawn instead of the value in the
+     * center of the CircleDisplay. If set to null, the custom text will be
+     * reset and the value will be drawn. Make sure the length of the array corresponds with the maximum number of steps (set with setStepSize(float stepsize).
+     *
+     * @param text
+     */
+    public void setProgressText(@Nullable String text) {
+        mProgressText = text;
+        invalidate();
+        requestLayout();
+    }
+
+    public String getProgressText() {
+        return mProgressText;
+    }
+
+    /**
+     * set this to true to draw the inner circle, default: true
+     *
+     * @param enabled
+     */
+    public void setInnerCircle(boolean enabled) {
+        mShowInnerCircle = enabled;
+        invalidate();
+        requestLayout();
+    }
+
+    /**
+     * returns true if drawing the inner circle is enabled, false if not
+     *
+     * @return
+     */
+    public boolean isInnerCircleEnabled() {
+        return mShowInnerCircle;
+    }
+
 }
