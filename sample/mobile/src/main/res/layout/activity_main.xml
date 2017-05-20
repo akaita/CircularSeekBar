@@ -14,9 +14,11 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
 
+        app:enabled="true"
         app:showIndicator="true"
         app:min="10"
         app:max="20"
-        app:progress="50"/>
+        app:progress="15"
+        app:showProgressText="true"/>
 
 </android.support.constraint.ConstraintLayout>

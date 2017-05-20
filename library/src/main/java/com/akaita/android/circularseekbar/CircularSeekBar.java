@@ -45,13 +45,13 @@ public class CircularSeekBar extends View implements OnGestureListener {
     // settable by the client DONE
     private @Nullable OnCircularSeekBarChangeListener mOnCircularSeekBarChangeListener = null;
     private @Nullable OnCenterClickedListener mOnCenterClickedListener = null;
+    private boolean mEnabled = true;
     private boolean mShowIndicator = true;
     private float mMinValue = 0f;
     private float mMaxValue = 100f;
     private float mProgress = 0f;
-    // settable by the client UNDONE
-    private boolean mEnabled = true;
     private boolean mShowText = true;
+    // settable by the client UNDONE
     private @Nullable String mCustomText = null;
     private boolean mShowInnerCircle = true;
     private float mRingWidthPercent = 50f;
@@ -120,10 +120,13 @@ public class CircularSeekBar extends View implements OnGestureListener {
                 0);
 
         try {
+            mEnabled = a.getBoolean(R.styleable.CircularSeekBar_enabled, mEnabled);
             mShowIndicator = a.getBoolean(R.styleable.CircularSeekBar_showIndicator, mShowIndicator);
             mMinValue = a.getFloat(R.styleable.CircularSeekBar_min, mMinValue);
             mMaxValue = a.getFloat(R.styleable.CircularSeekBar_max, mMaxValue);
             mProgress = a.getFloat(R.styleable.CircularSeekBar_progress, mProgress);
+            mShowText = a.getBoolean(R.styleable.CircularSeekBar_showProgressText, mShowText);
+
             int textPos = a.getInteger(R.styleable.CircularSeekBar_labelPosition, 0);
         } finally {
             a.recycle();
@@ -508,15 +511,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
     }
 
     /**
-     * set the drawing of the center text to be enabled or not
-     *
-     * @param enabled
-     */
-    public void setDrawText(boolean enabled) {
-        mShowText = enabled;
-    }
-
-    /**
      * sets the number of digits used to format values
      *
      * @param digits
@@ -563,18 +557,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
      */
     public void setTextSize(float size) {
         mTextPaint.setTextSize(Utils.convertDpToPixel(getResources(), size));
-    }
-
-    /**
-     * Enable touch gestures on the circle-display. If enabled, selecting values
-     * onTouch() is possible. Set a OnCircularSeekBarChangeListener to retrieve selected
-     * values. Do not forget to set a value before selecting values. By default
-     * the maxvalue is 0f and therefore nothing can be selected.
-     *
-     * @param enabled
-     */
-    public void setTouchEnabled(boolean enabled) {
-        mEnabled = enabled;
     }
 
     public void setTextPaint(@NonNull Paint p) {
@@ -696,4 +678,36 @@ public class CircularSeekBar extends View implements OnGestureListener {
         return mProgress;
     }
 
+    /**
+     * Enable touch gestures on the circle-display. If enabled, selecting values
+     * onTouch() is possible. Set a OnCircularSeekBarChangeListener to retrieve selected
+     * values. Do not forget to set a value before selecting values. By default
+     * the maxvalue is 0f and therefore nothing can be selected.
+     *
+     * @param enabled
+     */
+    public void setEnabled(boolean enabled) {
+        mEnabled = enabled;
+        invalidate();
+        requestLayout();
+    }
+
+    public boolean isEnabled() {
+        return mEnabled;
+    }
+
+    /**
+     * set the drawing of the center text to be enabled or not
+     *
+     * @param enabled
+     */
+    public void setProgressText(boolean enabled) {
+        mShowText = enabled;
+        invalidate();
+        requestLayout();
+    }
+
+    public boolean isProgressTextEnabled() {
+        return mShowText;
+    }
 }
