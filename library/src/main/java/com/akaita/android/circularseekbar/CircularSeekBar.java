@@ -9,6 +9,7 @@ import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
 import android.graphics.PointF;
 import android.graphics.RectF;
+import android.support.annotation.ColorInt;
 import android.support.annotation.FloatRange;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
@@ -54,13 +55,13 @@ public class CircularSeekBar extends View implements OnGestureListener {
     private @FloatRange(from=0,to=1) float mRingWidthFactor = 0.5f;
     private @Nullable String mProgressText = null;
     private boolean mShowInnerCircle = true;
+    private @ColorInt int mRingColor = Color.rgb(192, 255, 140); //LIGHT LIME
+    private @ColorInt int mInnerCircleColor = Color.WHITE;
+    private @ColorInt int mProgressTextColor = Color.BLACK;
     // settable by the client UNDONE
-    private int mArcColor = Color.rgb(192, 255, 140); //LIGHT LIME
-    private Paint mArcPaint;
+    private Paint mRingPaint;
     private Paint mInnerCirclePaint;
-    private int mInnerCircleColor = Color.WHITE;
-    private Paint mTextPaint;
-    private int mTextColor = Color.BLACK;
+    private Paint mProgressTextPaint;
     //TODO configurable speed factor
 
     private boolean mTouching = false;
@@ -132,6 +133,9 @@ public class CircularSeekBar extends View implements OnGestureListener {
             mRingWidthFactor = a.getFloat(R.styleable.CircularSeekBar_ringWidth, mRingWidthFactor);
             mProgressText = a.getString(R.styleable.CircularSeekBar_progressText);
             mShowInnerCircle = a.getBoolean(R.styleable.CircularSeekBar_showInnerCircle, mShowInnerCircle);
+            mRingColor = a.getColor(R.styleable.CircularSeekBar_ringColor, mRingColor);
+            mInnerCircleColor = a.getColor(R.styleable.CircularSeekBar_innerCircleColor, mInnerCircleColor);
+            mProgressTextColor = a.getColor(R.styleable.CircularSeekBar_progressTextColor, mProgressTextColor);
 
             int textPos = a.getInteger(R.styleable.CircularSeekBar_labelPosition, 0);
         } finally {
@@ -141,19 +145,19 @@ public class CircularSeekBar extends View implements OnGestureListener {
 
 
 
-        mArcPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mArcPaint.setStyle(Style.FILL);
-        mArcPaint.setColor(mArcColor);
+        mRingPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mRingPaint.setStyle(Style.FILL);
+        mRingPaint.setColor(mRingColor);
 
         mInnerCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mInnerCirclePaint.setStyle(Style.FILL);
         mInnerCirclePaint.setColor(mInnerCircleColor);
 
-        mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mTextPaint.setStyle(Style.STROKE);
-        mTextPaint.setTextAlign(Align.CENTER);
-        mTextPaint.setColor(mTextColor);
-        mTextPaint.setTextSize(Utils.convertDpToPixel(getResources(), 24f));
+        mProgressTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mProgressTextPaint.setStyle(Style.STROKE);
+        mProgressTextPaint.setTextAlign(Align.CENTER);
+        mProgressTextPaint.setColor(mProgressTextColor);
+        mProgressTextPaint.setTextSize(Utils.convertDpToPixel(getResources(), 24f));
 
         mGestureDetector = new GestureDetector(getContext(), this);
     }
@@ -187,7 +191,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
     private void drawText(Canvas c) {
         if (mAngularVelocityTracker != null) {
             c.drawText(mFormatValue.format(mProgress), getWidth() / 2,
-                    getHeight() / 2 + mTextPaint.descent(), mTextPaint);
+                    getHeight() / 2 + mProgressTextPaint.descent(), mProgressTextPaint);
         }
     }
 
@@ -198,7 +202,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
      */
     private void drawCustomText(Canvas c) {
         c.drawText(mProgressText, getWidth() / 2,
-                getHeight() / 2 + mTextPaint.descent(), mTextPaint);
+                getHeight() / 2 + mProgressTextPaint.descent(), mProgressTextPaint);
     }
 
     /**
@@ -207,8 +211,8 @@ public class CircularSeekBar extends View implements OnGestureListener {
      * @param c
      */
     private void drawWholeCircle(Canvas c) {
-        mArcPaint.setAlpha(mDimAlpha);
-        c.drawCircle(getWidth() / 2, getHeight() / 2, getOuterCircleRadius(), mArcPaint);
+        mRingPaint.setAlpha(mDimAlpha);
+        c.drawCircle(getWidth() / 2, getHeight() / 2, getOuterCircleRadius(), mRingPaint);
     }
 
     private void drawInnerCircle(Canvas c) {
@@ -216,8 +220,8 @@ public class CircularSeekBar extends View implements OnGestureListener {
     }
 
     private void drawValueArc(Canvas c) {
-        mArcPaint.setAlpha(255);
-        c.drawArc(mCircleBox, mAngle - 105, 30, true, mArcPaint);
+        mRingPaint.setAlpha(255);
+        c.drawArc(mCircleBox, mAngle - 105, 30, true, mRingPaint);
     }
 
     /**
@@ -472,7 +476,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
      * @param color
      */
     public void setColor(int color) {
-        mArcPaint.setColor(color);
+        mRingPaint.setColor(color);
     }
 
     /**
@@ -522,15 +526,15 @@ public class CircularSeekBar extends View implements OnGestureListener {
      * @param size
      */
     public void setTextSize(float size) {
-        mTextPaint.setTextSize(Utils.convertDpToPixel(getResources(), size));
+        mProgressTextPaint.setTextSize(Utils.convertDpToPixel(getResources(), size));
     }
 
     public void setTextPaint(@NonNull Paint p) {
-        mTextPaint = p;
+        mProgressTextPaint = p;
     }
 
     public void setArcPaint(@NonNull Paint p) {
-        mArcPaint = p;
+        mRingPaint = p;
     }
 
     public void setInnerCirclePaint(@NonNull Paint p) {
@@ -729,4 +733,36 @@ public class CircularSeekBar extends View implements OnGestureListener {
         return mShowInnerCircle;
     }
 
+    public void setRingColor(@ColorInt int color) {
+        mRingColor = color;
+        mRingPaint.setColor(mRingColor);
+        invalidate();
+        requestLayout();
+    }
+
+    public @ColorInt int getRingColor() {
+        return mRingColor;
+    }
+
+    public void setInnerCircleColor(@ColorInt int color) {
+        mInnerCircleColor = color;
+        mInnerCirclePaint.setColor(mInnerCircleColor);
+        invalidate();
+        requestLayout();
+    }
+
+    public @ColorInt int getInnerCircleColor() {
+        return mInnerCircleColor;
+    }
+
+    public void setProgressTextColor(@ColorInt int color) {
+        mProgressTextColor = color;
+        mProgressTextPaint.setColor(mProgressTextColor);
+        invalidate();
+        requestLayout();
+    }
+
+    public @ColorInt int getProgressTextColor() {
+        return mProgressTextColor;
+    }
 }

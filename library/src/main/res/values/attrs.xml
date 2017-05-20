@@ -10,6 +10,9 @@
         <attr name="ringWidth" format="float" />
         <attr name="progressText" format="string" />
         <attr name="showInnerCircle" format="boolean" />
+        <attr name="ringColor" format="color" />
+        <attr name="innerCircleColor" format="color" />
+        <attr name="progressTextColor" format="color" />
 
         <attr name="labelPosition" format="enum">
             <enum name="left" value="0"/>
