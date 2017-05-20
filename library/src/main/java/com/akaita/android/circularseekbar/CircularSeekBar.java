@@ -589,7 +589,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
     public void setIndicator(boolean enabled) {
         mShowIndicator = enabled;
         invalidate();
-        requestLayout();
     }
 
     public boolean isIndicatorEnabled() {
@@ -623,15 +622,12 @@ public class CircularSeekBar extends View implements OnGestureListener {
     }
 
     public void setProgress(float progress) {
-        if (progress != mProgress) {
-            mAngle = calcAngle(progress / mMaxValue * 100f);
-            mProgress = progress;
-            if (mOnCircularSeekBarChangeListener != null) {
-                mOnCircularSeekBarChangeListener.onProgressChanged(this, mProgress, false);
-            }
-            invalidate();
-            requestLayout();
+        mAngle = calcAngle(progress / mMaxValue * 100f);
+        mProgress = progress;
+        if (mOnCircularSeekBarChangeListener != null) {
+            mOnCircularSeekBarChangeListener.onProgressChanged(this, mProgress, false);
         }
+        invalidate();
     }
 
     /**
@@ -655,7 +651,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
     public void setEnabled(boolean enabled) {
         mEnabled = enabled;
         invalidate();
-        requestLayout();
     }
 
     public boolean isEnabled() {
@@ -670,7 +665,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
     public void setProgressText(boolean enabled) {
         mShowText = enabled;
         invalidate();
-        requestLayout();
     }
 
     public boolean isProgressTextEnabled() {
@@ -685,7 +679,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
     public void setRingWidthFactor(@FloatRange(from=0f,to=1f) float factor) {
         mRingWidthFactor = factor;
         invalidate();
-        requestLayout();
     }
 
     public float getRingWidthFactor() {
@@ -702,7 +695,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
     public void setProgressText(@Nullable String text) {
         mProgressText = text;
         invalidate();
-        requestLayout();
     }
 
     public String getProgressText() {
@@ -717,7 +709,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
     public void setInnerCircle(boolean enabled) {
         mShowInnerCircle = enabled;
         invalidate();
-        requestLayout();
     }
 
     /**
@@ -733,7 +724,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
         mRingColor = color;
         mRingPaint.setColor(mRingColor);
         invalidate();
-        requestLayout();
     }
 
     public @ColorInt int getRingColor() {
@@ -744,7 +734,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
         mInnerCircleColor = color;
         mInnerCirclePaint.setColor(mInnerCircleColor);
         invalidate();
-        requestLayout();
     }
 
     public @ColorInt int getInnerCircleColor() {
@@ -755,7 +744,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
         mProgressTextColor = color;
         mProgressTextPaint.setColor(mProgressTextColor);
         invalidate();
-        requestLayout();
     }
 
     public @ColorInt int getProgressTextColor() {
@@ -765,19 +753,16 @@ public class CircularSeekBar extends View implements OnGestureListener {
     public void setRingPaint(@NonNull Paint paint) {
         mRingPaint = paint;
         invalidate();
-        requestLayout();
     }
 
     public void setInnerCirclePaint(@NonNull Paint paint) {
         mInnerCirclePaint = paint;
         invalidate();
-        requestLayout();
     }
 
     public void setProgressTextPaint(@NonNull Paint paint) {
         mProgressTextPaint = paint;
         invalidate();
-        requestLayout();
     }
 
 }
