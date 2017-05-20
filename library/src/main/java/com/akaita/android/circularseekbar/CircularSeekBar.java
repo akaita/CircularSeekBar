@@ -43,7 +43,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
         void onCenterClicked(CircularSeekBar seekBar, float progress);
     }
 
-    // settable by the client DONE
+    // settable by the client through attributes and programmatically
     private @Nullable OnCircularSeekBarChangeListener mOnCircularSeekBarChangeListener = null;
     private @Nullable OnCenterClickedListener mOnCenterClickedListener = null;
     private boolean mEnabled = true;
@@ -58,10 +58,12 @@ public class CircularSeekBar extends View implements OnGestureListener {
     private @ColorInt int mRingColor = Color.rgb(192, 255, 140); //LIGHT LIME
     private @ColorInt int mInnerCircleColor = Color.WHITE;
     private @ColorInt int mProgressTextColor = Color.BLACK;
-    // settable by the client UNDONE
+
+    // settable by the client programmatically
     private Paint mRingPaint;
     private Paint mInnerCirclePaint;
     private Paint mProgressTextPaint;
+    
     //TODO configurable speed factor
 
     private boolean mTouching = false;
@@ -529,18 +531,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
         mProgressTextPaint.setTextSize(Utils.convertDpToPixel(getResources(), size));
     }
 
-    public void setTextPaint(@NonNull Paint p) {
-        mProgressTextPaint = p;
-    }
-
-    public void setArcPaint(@NonNull Paint p) {
-        mRingPaint = p;
-    }
-
-    public void setInnerCirclePaint(@NonNull Paint p) {
-        mInnerCirclePaint = p;
-    }
-
 
 
 
@@ -765,4 +755,23 @@ public class CircularSeekBar extends View implements OnGestureListener {
     public @ColorInt int getProgressTextColor() {
         return mProgressTextColor;
     }
+
+    public void setRingPaint(@NonNull Paint paint) {
+        mRingPaint = paint;
+        invalidate();
+        requestLayout();
+    }
+
+    public void setInnerCirclePaint(@NonNull Paint paint) {
+        mInnerCirclePaint = paint;
+        invalidate();
+        requestLayout();
+    }
+
+    public void setProgressTextPaint(@NonNull Paint paint) {
+        mProgressTextPaint = paint;
+        invalidate();
+        requestLayout();
+    }
+
 }
