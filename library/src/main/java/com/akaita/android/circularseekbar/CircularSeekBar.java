@@ -14,7 +14,6 @@ import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.OnGestureListener;
 import android.view.MotionEvent;
@@ -43,19 +42,25 @@ public class CircularSeekBar extends View implements OnGestureListener {
         void onCenterClicked(CircularSeekBar seekBar, float progress);
     }
 
-    // settable by the client
+    // settable by the client DONE
     private @Nullable OnCircularSeekBarChangeListener mOnCircularSeekBarChangeListener = null;
     private @Nullable OnCenterClickedListener mOnCenterClickedListener = null;
-    private boolean mShowTouch = false;
-    private float mProgress = 0f;
+    private boolean mShowIndicator = true;
     private float mMinValue = 0f;
     private float mMaxValue = 100f;
+    private float mProgress = 0f;
+    // settable by the client UNDONE
     private boolean mEnabled = true;
     private boolean mShowText = true;
     private @Nullable String mCustomText = null;
     private boolean mShowInnerCircle = true;
     private float mRingWidthPercent = 50f;
+    private Paint mArcPaint;
+    private Paint mInnerCirclePaint;
+    private Paint mTextPaint;
+    //TODO configurable speed factor
 
+    private boolean mTouching = false;
 
     /**
      * gesturedetector for recognizing single-taps
@@ -90,10 +95,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
      */
     private RectF mCircleBox = new RectF();
 
-    private Paint mArcPaint;
-    private Paint mInnerCirclePaint;
-    private Paint mTextPaint;
-
     //region Constructor
     public CircularSeekBar(Context context) {
         super(context);
@@ -115,10 +116,14 @@ public class CircularSeekBar extends View implements OnGestureListener {
         TypedArray a = context.getTheme().obtainStyledAttributes(
                 attrs,
                 R.styleable.CircularSeekBar,
-                0, 0);
+                0,
+                0);
 
         try {
-            boolean showText = a.getBoolean(R.styleable.CircularSeekBar_showText, false);
+            mShowIndicator = a.getBoolean(R.styleable.CircularSeekBar_showIndicator, mShowIndicator);
+            mMinValue = a.getFloat(R.styleable.CircularSeekBar_min, mMinValue);
+            mMaxValue = a.getFloat(R.styleable.CircularSeekBar_max, mMaxValue);
+            mProgress = a.getFloat(R.styleable.CircularSeekBar_progress, mProgress);
             int textPos = a.getInteger(R.styleable.CircularSeekBar_labelPosition, 0);
         } finally {
             a.recycle();
@@ -150,7 +155,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
 
         drawWholeCircle(canvas);
 
-        if (mShowTouch) {
+        if (mShowIndicator && mTouching) {
             drawValueArc(canvas);
         }
 
@@ -297,7 +302,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
                 switch (e.getAction()) {
 
                     case MotionEvent.ACTION_DOWN:
-                        mShowTouch = true;
+                        mTouching = true;
                         mAngularVelocityTracker.clear();
                         updateValue(x, y, mAngularVelocityTracker.getAngularVelocity());
                         invalidate();
@@ -305,7 +310,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
                             mOnCircularSeekBarChangeListener.onStartTrackingTouch(this);
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        mShowTouch = true;
+                        mTouching = true;
                         mAngularVelocityTracker.addMovement(e);
                         updateValue(x, y, mAngularVelocityTracker.getAngularVelocity());
                         invalidate();
@@ -314,7 +319,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
-                        mShowTouch = false;
+                        mTouching = false;
                         mAngularVelocityTracker.clear();
                         invalidate();
                         if (mOnCircularSeekBarChangeListener != null)
@@ -322,7 +327,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
                         break;
                 }
             } else {
-                mShowTouch = false;
+                mTouching = false;
                 mAngularVelocityTracker.clear();
                 invalidate();
             }
@@ -436,16 +441,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
     }
 
     /**
-     * Returns the currently displayed value from the view. Depending on the
-     * used method to show the value, this value can be percent or actual value.
-     *
-     * @return
-     */
-    public float getProgress() {
-        return mProgress;
-    }
-
-    /**
      * returns true if drawing the inner circle is enabled, false if not
      *
      * @return
@@ -538,22 +533,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
         mFormatValue = new DecimalFormat("###,###,###,##0" + b.toString());
     }
 
-    public void setMax(float max) {
-        mMaxValue = max;
-    }
-
-    public void setMin(float min) {
-        mMinValue = min;
-    }
-
-    public void setProgress(float progress) {
-        mAngle = calcAngle(progress / mMaxValue * 100f);
-        mProgress = progress;
-        if (mOnCircularSeekBarChangeListener!=null) {
-            mOnCircularSeekBarChangeListener.onProgressChanged(this, mProgress, false);
-        }
-    }
-
     /**
      * set the thickness of the value bar, default 50%
      *
@@ -609,4 +588,112 @@ public class CircularSeekBar extends View implements OnGestureListener {
     public void setInnerCirclePaint(@NonNull Paint p) {
         mInnerCirclePaint = p;
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public void setIndicator(boolean enabled) {
+        mShowIndicator = enabled;
+        invalidate();
+        requestLayout();
+    }
+
+    public boolean isIndicatorEnabled() {
+        return mShowIndicator;
+    }
+
+    public void setMin(float min) {
+        mMinValue = min;
+        setProgress(Math.min(mMinValue, mProgress));
+    }
+
+    public float getMin() {
+        return mMinValue;
+    }
+
+    public void setMax(float max) {
+        mMaxValue = max;
+        setProgress(Math.max(mMaxValue, mProgress));
+    }
+
+    public float getMax() {
+        return mMaxValue;
+    }
+
+    public void setProgress(float progress) {
+        if (progress != mProgress) {
+            mAngle = calcAngle(progress / mMaxValue * 100f);
+            mProgress = progress;
+            if (mOnCircularSeekBarChangeListener != null) {
+                mOnCircularSeekBarChangeListener.onProgressChanged(this, mProgress, false);
+            }
+            invalidate();
+            requestLayout();
+        }
+    }
+
+    /**
+     * Returns the currently displayed value from the view. Depending on the
+     * used method to show the value, this value can be percent or actual value.
+     *
+     * @return
+     */
+    public float getProgress() {
+        return mProgress;
+    }
+
 }

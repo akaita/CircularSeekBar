@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="CircularSeekBar">
-        <attr name="showText" format="boolean" />
+        <attr name="showIndicator" format="boolean" />
+        <attr name="min" format="float" />
+        <attr name="max" format="float" />
+        <attr name="progress" format="float" />
+        
         <attr name="labelPosition" format="enum">
             <enum name="left" value="0"/>
             <enum name="right" value="1"/>
