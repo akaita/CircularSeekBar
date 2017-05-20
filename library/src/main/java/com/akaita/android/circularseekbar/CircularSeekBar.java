@@ -50,6 +50,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
     private boolean mShowIndicator = true;
     private float mMinValue = 0f;
     private float mMaxValue = 100f;
+    private @FloatRange(from=0) float mSpeedMultiplier = 1f;
     private float mProgress = 0f;
     private boolean mShowText = true;
     private @FloatRange(from=0,to=1) float mRingWidthFactor = 0.5f;
@@ -63,8 +64,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
     private Paint mRingPaint;
     private Paint mInnerCirclePaint;
     private Paint mProgressTextPaint;
-    
-    //TODO configurable speed factor
+
 
     private boolean mTouching = false;
 
@@ -130,6 +130,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
             mShowIndicator = a.getBoolean(R.styleable.CircularSeekBar_showIndicator, mShowIndicator);
             mMinValue = a.getFloat(R.styleable.CircularSeekBar_min, mMinValue);
             mMaxValue = a.getFloat(R.styleable.CircularSeekBar_max, mMaxValue);
+            mSpeedMultiplier = a.getFloat(R.styleable.CircularSeekBar_speedMultiplier, mSpeedMultiplier);
             mProgress = a.getFloat(R.styleable.CircularSeekBar_progress, mProgress);
             mShowText = a.getBoolean(R.styleable.CircularSeekBar_showProgressText, mShowText);
             mRingWidthFactor = a.getFloat(R.styleable.CircularSeekBar_ringWidth, mRingWidthFactor);
@@ -138,8 +139,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
             mRingColor = a.getColor(R.styleable.CircularSeekBar_ringColor, mRingColor);
             mInnerCircleColor = a.getColor(R.styleable.CircularSeekBar_innerCircleColor, mInnerCircleColor);
             mProgressTextColor = a.getColor(R.styleable.CircularSeekBar_progressTextColor, mProgressTextColor);
-
-            int textPos = a.getInteger(R.styleable.CircularSeekBar_labelPosition, 0);
         } finally {
             a.recycle();
         }
@@ -290,7 +289,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
         super.onSizeChanged(xNew, yNew, xOld, yOld);
 
         initBox();
-
         mAngularVelocityTracker = new AngularVelocityTracker(getCenter().x, getCenter().y);
     }
 
@@ -364,7 +362,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
         float angle = getAngleForPoint(x, y);
 
         // calculate the new value depending on angle
-        float newVal = mProgress + mMaxValue / 100 * speed;
+        float newVal = mProgress + mMaxValue / 100 * speed * mSpeedMultiplier;
         newVal = Math.min(newVal, mMaxValue);
         newVal = Math.max(newVal, mMinValue);
 
@@ -614,6 +612,14 @@ public class CircularSeekBar extends View implements OnGestureListener {
 
     public float getMax() {
         return mMaxValue;
+    }
+
+    public void setSpeedMultiplier(@FloatRange(from=0) float speedMultiplier) {
+        mSpeedMultiplier = speedMultiplier;
+    }
+
+    public float getSpeedMultiplier() {
+        return mSpeedMultiplier;
     }
 
     public void setProgress(float progress) {

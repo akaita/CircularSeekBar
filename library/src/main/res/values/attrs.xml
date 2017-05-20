@@ -5,6 +5,7 @@
         <attr name="showIndicator" format="boolean" />
         <attr name="min" format="float" />
         <attr name="max" format="float" />
+        <attr name="speedMultiplier" format="float" />
         <attr name="progress" format="float" />
         <attr name="showProgressText" format="boolean" />
         <attr name="ringWidth" format="float" />
@@ -13,10 +14,5 @@
         <attr name="ringColor" format="color" />
         <attr name="innerCircleColor" format="color" />
         <attr name="progressTextColor" format="color" />
-
-        <attr name="labelPosition" format="enum">
-            <enum name="left" value="0"/>
-            <enum name="right" value="1"/>
-        </attr>
     </declare-styleable>
 </resources>

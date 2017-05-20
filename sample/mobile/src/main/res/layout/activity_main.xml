@@ -18,6 +18,7 @@
         app:showIndicator="true"
         app:min="10"
         app:max="20"
+        app:speedMultiplier="1"
         app:progress="15"
         app:showProgressText="true"
         app:ringWidth="0.5"
