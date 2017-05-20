@@ -51,15 +51,16 @@ public class CircularSeekBar extends View implements OnGestureListener {
     private float mMaxValue = 100f;
     private float mProgress = 0f;
     private boolean mShowText = true;
+    private @FloatRange(from=0,to=1) float mRingWidthFactor = 0.5f;
     // settable by the client UNDONE
     private @Nullable String mCustomText = null;
     private boolean mShowInnerCircle = true;
-    private float mRingWidthPercent = 50f;
     private Paint mArcPaint;
     private Paint mInnerCirclePaint;
     private Paint mTextPaint;
     //TODO configurable speed factor
 
+    private static int COLOR_LIGHT_LIME = Color.rgb(192, 255, 140);
     private boolean mTouching = false;
 
     /**
@@ -126,6 +127,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
             mMaxValue = a.getFloat(R.styleable.CircularSeekBar_max, mMaxValue);
             mProgress = a.getFloat(R.styleable.CircularSeekBar_progress, mProgress);
             mShowText = a.getBoolean(R.styleable.CircularSeekBar_showProgressText, mShowText);
+            mRingWidthFactor = a.getFloat(R.styleable.CircularSeekBar_ringWidth, mRingWidthFactor);
 
             int textPos = a.getInteger(R.styleable.CircularSeekBar_labelPosition, 0);
         } finally {
@@ -137,7 +139,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
 
         mArcPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mArcPaint.setStyle(Style.FILL);
-        mArcPaint.setColor(Color.rgb(192, 255, 140));
+        mArcPaint.setColor(COLOR_LIGHT_LIME);
 
         mInnerCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mInnerCirclePaint.setStyle(Style.FILL);
@@ -251,8 +253,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
      * @return
      */
     private float getInnerCircleRadius() {
-        return getOuterCircleRadius() / 100f
-                * (100f - mRingWidthPercent);
+        return getOuterCircleRadius() * (1 - mRingWidthFactor);
     }
 
     /**
@@ -372,7 +373,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
 
         // touch gestures only work when touches are made exactly on the
         // bar/arc
-        if (distance <= r - r * mRingWidthPercent / 100) {
+        if (distance <= r - r * mRingWidthFactor) {
             if (mOnCenterClickedListener != null)
                 mOnCenterClickedListener.onCenterClicked(this, mProgress);
         }
@@ -525,15 +526,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
         }
 
         mFormatValue = new DecimalFormat("###,###,###,##0" + b.toString());
-    }
-
-    /**
-     * set the thickness of the value bar, default 50%
-     *
-     * @param percentFromTotalWidth
-     */
-    public void setRingWidthPercent(@FloatRange(from=0f,to=100f) float percentFromTotalWidth) {
-        mRingWidthPercent = percentFromTotalWidth;
     }
 
     /**
@@ -709,5 +701,20 @@ public class CircularSeekBar extends View implements OnGestureListener {
 
     public boolean isProgressTextEnabled() {
         return mShowText;
+    }
+
+    /**
+     * set the thickness of the value bar as a factor of the total width, default 0.5
+     *
+     * @param factor
+     */
+    public void setRingWidthFactor(@FloatRange(from=0f,to=1f) float factor) {
+        mRingWidthFactor = factor;
+        invalidate();
+        requestLayout();
+    }
+
+    public float getRingWidthFactor() {
+        return mRingWidthFactor;
     }
 }

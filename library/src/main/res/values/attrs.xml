@@ -7,6 +7,7 @@
         <attr name="max" format="float" />
         <attr name="progress" format="float" />
         <attr name="showProgressText" format="boolean" />
+        <attr name="ringWidth" format="float" />
 
         <attr name="labelPosition" format="enum">
             <enum name="left" value="0"/>
