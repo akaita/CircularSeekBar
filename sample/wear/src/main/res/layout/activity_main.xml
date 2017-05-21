@@ -9,7 +9,7 @@
     tools:deviceIds="wear">
 
     <com.akaita.android.circularseekbar.CircularSeekBar
-        android:id="@+id/text"
+        android:id="@+id/seekbar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_box="all" />
