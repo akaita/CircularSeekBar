@@ -66,36 +66,13 @@ public class CircularSeekBar extends View {
     private Paint mProgressTextPaint;
     private NumberFormat mProgressTextFormat = new DecimalFormat("###,###,###,##0.0");
 
-
-    private boolean mTouching = false;
-
-    /**
-     * gesturedetector for recognizing single-taps
-     */
-    private GestureDetector mGestureDetector;
-
-
-    /**
-     * tracks movements to calculate angular speed
-     */
-    private AngularVelocityTracker mAngularVelocityTracker;
-
-    /**
-     * angle that represents the displayed value
-     */
-    private float mAngle = 0f;
-
-
-    /**
-     * represents the alpha value used for the remainder bar
-     */
+    // private
+    private RectF mViewBox = new RectF();
     private int mDimAlpha = 80;
-
-    /**
-     * rect object that represents the bounds of the view, needed for drawing
-     * the circle
-     */
-    private RectF mCircleBox = new RectF();
+    private GestureDetector mGestureDetector;
+    private boolean mTouching = false;
+    private @FloatRange(from=0,to=360) float mTouchAngle = 0f;
+    private AngularVelocityTracker mAngularVelocityTracker;
 
     //region Constructor
     public CircularSeekBar(Context context) {
@@ -501,7 +478,7 @@ public class CircularSeekBar extends View {
 
     private void drawProgressArc(Canvas c) {
         mRingPaint.setAlpha(255);
-        c.drawArc(mCircleBox, mAngle - 105, 30, true, mRingPaint);
+        c.drawArc(mViewBox, mTouchAngle - 105, 30, true, mRingPaint);
     }
 
     private void drawProgressText(Canvas c) {
@@ -527,7 +504,7 @@ public class CircularSeekBar extends View {
         int height = getHeight();
         float diameter = getDiameter();
 
-        mCircleBox.set(width / 2 - diameter / 2, height / 2 - diameter / 2, width / 2
+        mViewBox.set(width / 2 - diameter / 2, height / 2 - diameter / 2, width / 2
                 + diameter / 2, height / 2 + diameter / 2);
     }
 
@@ -539,7 +516,7 @@ public class CircularSeekBar extends View {
      */
     private void updateProgress(float x, float y, float speed) {
         // calculate the touch-angle
-        mAngle = getAngle(x, y);
+        mTouchAngle = getAngle(x, y);
 
         // calculate the new value depending on angle
         float newVal = mProgress + mMaxValue / 100 * speed * mSpeedMultiplier;

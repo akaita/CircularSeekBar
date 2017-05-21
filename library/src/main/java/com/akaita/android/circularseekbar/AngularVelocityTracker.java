@@ -2,9 +2,6 @@ package com.akaita.android.circularseekbar;
 
 import android.view.MotionEvent;
 
-/**
- * Created by mikel on 25/06/2016.
- */
 class AngularVelocityTracker {
 
     // TODO use event.pressure (maybe: angle*(1+pressure))

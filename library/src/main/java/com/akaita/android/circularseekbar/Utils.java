@@ -3,10 +3,6 @@ package com.akaita.android.circularseekbar;
 import android.content.res.Resources;
 import android.util.DisplayMetrics;
 
-/**
- * Created by mikel on 19/05/2017.
- */
-
 class Utils {
 
     private Utils() {}
@@ -24,5 +20,4 @@ class Utils {
         DisplayMetrics metrics = r.getDisplayMetrics();
         return dp * (metrics.densityDpi / 160f);
     }
-
 }
