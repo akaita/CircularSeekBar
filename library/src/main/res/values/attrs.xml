@@ -14,5 +14,6 @@
         <attr name="ringColor" format="color" />
         <attr name="innerCircleColor" format="color" />
         <attr name="progressTextColor" format="color" />
+        <attr name="progressTextSize" format="float" />
     </declare-styleable>
 </resources>

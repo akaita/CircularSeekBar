@@ -26,6 +26,7 @@
         app:ringColor="@color/colorPrimary"
         app:innerCircleColor="@color/colorAccent"
         app:progressTextColor="@color/colorPrimaryDark"
+        app:progressTextSize="30"
         />
         <!-- app:progressText="xxx" -->
 

@@ -11,7 +11,6 @@ import android.graphics.PointF;
 import android.graphics.RectF;
 import android.support.annotation.ColorInt;
 import android.support.annotation.FloatRange;
-import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -21,6 +20,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 
 /**
  * Simple custom-view for displaying values (with and without animation) and
@@ -59,11 +59,13 @@ public class CircularSeekBar extends View implements OnGestureListener {
     private @ColorInt int mRingColor = Color.rgb(192, 255, 140); //LIGHT LIME
     private @ColorInt int mInnerCircleColor = Color.WHITE;
     private @ColorInt int mProgressTextColor = Color.BLACK;
+    private @FloatRange(from=0) float mProgressTextSize = Utils.convertDpToPixel(getResources(), 24f);
 
     // settable by the client programmatically
     private Paint mRingPaint;
     private Paint mInnerCirclePaint;
     private Paint mProgressTextPaint;
+    private NumberFormat mProgressTextFormat = new DecimalFormat("###,###,###,##0.0");
 
 
     private boolean mTouching = false;
@@ -89,11 +91,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
      * represents the alpha value used for the remainder bar
      */
     private int mDimAlpha = 80;
-
-    /**
-     * the decimalformat responsible for formatting the values in the view
-     */
-    private DecimalFormat mFormatValue = new DecimalFormat("###,###,###,##0.0");
 
     /**
      * rect object that represents the bounds of the view, needed for drawing
@@ -139,6 +136,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
             mRingColor = a.getColor(R.styleable.CircularSeekBar_ringColor, mRingColor);
             mInnerCircleColor = a.getColor(R.styleable.CircularSeekBar_innerCircleColor, mInnerCircleColor);
             mProgressTextColor = a.getColor(R.styleable.CircularSeekBar_progressTextColor, mProgressTextColor);
+            mProgressTextSize = Utils.convertDpToPixel(getResources(), a.getFloat(R.styleable.CircularSeekBar_progressTextSize, mProgressTextSize));
         } finally {
             a.recycle();
         }
@@ -158,7 +156,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
         mProgressTextPaint.setStyle(Style.STROKE);
         mProgressTextPaint.setTextAlign(Align.CENTER);
         mProgressTextPaint.setColor(mProgressTextColor);
-        mProgressTextPaint.setTextSize(Utils.convertDpToPixel(getResources(), 24f));
+        mProgressTextPaint.setTextSize(mProgressTextSize);
 
         mGestureDetector = new GestureDetector(getContext(), this);
     }
@@ -191,7 +189,7 @@ public class CircularSeekBar extends View implements OnGestureListener {
      */
     private void drawText(Canvas c) {
         if (mAngularVelocityTracker != null) {
-            c.drawText(mFormatValue.format(mProgress), getWidth() / 2,
+            c.drawText(mProgressTextFormat.format(mProgress), getWidth() / 2,
                     getHeight() / 2 + mProgressTextPaint.descent(), mProgressTextPaint);
         }
     }
@@ -442,69 +440,33 @@ public class CircularSeekBar extends View implements OnGestureListener {
         // TODO Auto-generated method stub
     }
 
-    /**
-     * returns the angle representing the given value
-     *
-     * @param value
-     * @return
-     */
-    public float getAngleForValue(float value) {
-        return value / mMaxValue * 360f;
-    }
 
-    /**
-     * returns true if drawing the text in the center is enabled
-     *
-     * @return
-     */
-    public boolean isDrawTextEnabled() {
-        return mShowText;
-    }
 
-    /**
-     * returns true if touch-gestures are enabled, false if not
-     *
-     * @return
-     */
-    public boolean isTouchEnabled() {
-        return mEnabled;
-    }
 
-    /**
-     * set the color of the arc
-     *
-     * @param color
-     */
-    public void setColor(int color) {
-        mRingPaint.setColor(color);
-    }
 
-    /**
-     * set the alpha value to be used for the remainder of the arc, default 80
-     * (use value between 0 and 255)
-     *
-     * @param alpha
-     */
-    public void setDimAlpha(@IntRange(from=0,to=255) int alpha) {
-        mDimAlpha = alpha;
-    }
 
-    /**
-     * sets the number of digits used to format values
-     *
-     * @param digits
-     */
-    public void setFormatDigits(int digits) {
 
-        StringBuilder b = new StringBuilder();
-        for (int i = 0; i < digits; i++) {
-            if (i == 0)
-                b.append(".");
-            b.append("0");
-        }
 
-        mFormatValue = new DecimalFormat("###,###,###,##0" + b.toString());
-    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * set a selection listener for the circle-display that is called whenever a
@@ -520,14 +482,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
         mOnCenterClickedListener = l;
     }
 
-    /**
-     * set the size of the center text in dp
-     *
-     * @param size
-     */
-    public void setTextSize(float size) {
-        mProgressTextPaint.setTextSize(Utils.convertDpToPixel(getResources(), size));
-    }
 
 
 
@@ -765,4 +719,22 @@ public class CircularSeekBar extends View implements OnGestureListener {
         invalidate();
     }
 
+    public void setProgressTextSize(@FloatRange(from=0) float pixels) {
+        mProgressTextSize = pixels;
+        mProgressTextPaint.setTextSize(mProgressTextSize);
+        invalidate();
+    }
+
+    public float getProgressTextSize() {
+        return mProgressTextSize;
+    }
+
+    public void setProgressTextFormat(@NonNull NumberFormat format) {
+        mProgressTextFormat = format;
+        invalidate();
+    }
+
+    public NumberFormat getProgressTextFormat() {
+        return mProgressTextFormat;
+    }
 }
