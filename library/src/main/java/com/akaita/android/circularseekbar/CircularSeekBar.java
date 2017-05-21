@@ -15,7 +15,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
-import android.view.GestureDetector.OnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -26,7 +25,7 @@ import java.text.NumberFormat;
  * Simple custom-view for displaying values (with and without animation) and
  * selecting values onTouch().
  */
-public class CircularSeekBar extends View implements OnGestureListener {
+public class CircularSeekBar extends View {
     /**
      * listener for callbacks when selecting values ontouch
      *
@@ -121,7 +120,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
                 R.styleable.CircularSeekBar,
                 0,
                 0);
-
         try {
             mEnabled = a.getBoolean(R.styleable.CircularSeekBar_enabled, mEnabled);
             mShowIndicator = a.getBoolean(R.styleable.CircularSeekBar_showIndicator, mShowIndicator);
@@ -141,9 +139,6 @@ public class CircularSeekBar extends View implements OnGestureListener {
             a.recycle();
         }
 
-
-
-
         mRingPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mRingPaint.setStyle(Style.FILL);
         mRingPaint.setColor(mRingColor);
@@ -158,7 +153,16 @@ public class CircularSeekBar extends View implements OnGestureListener {
         mProgressTextPaint.setColor(mProgressTextColor);
         mProgressTextPaint.setTextSize(mProgressTextSize);
 
-        mGestureDetector = new GestureDetector(getContext(), this);
+        mGestureDetector = new GestureDetector(getContext(), new GestureListener());
+    }
+
+    //region Lifecycle
+    @Override
+    protected void onSizeChanged(int xNew, int yNew, int xOld, int yOld){
+        super.onSizeChanged(xNew, yNew, xOld, yOld);
+
+        initBox();
+        mAngularVelocityTracker = new AngularVelocityTracker(getCenter().x, getCenter().y);
     }
 
     @Override
@@ -168,128 +172,24 @@ public class CircularSeekBar extends View implements OnGestureListener {
         drawWholeCircle(canvas);
 
         if (mShowIndicator && mTouching) {
-            drawValueArc(canvas);
+            drawProgressArc(canvas);
         }
 
-        if (mShowInnerCircle)
+        if (mShowInnerCircle) {
             drawInnerCircle(canvas);
+        }
 
         if (mShowText) {
-            if (mProgressText != null)
+            if (mProgressText != null) {
                 drawCustomText(canvas);
-            else
+            } else {
                 drawText(canvas);
+            }
         }
     }
+    //endregion
 
-    /**
-     * draws the text in the center of the view
-     *
-     * @param c
-     */
-    private void drawText(Canvas c) {
-        if (mAngularVelocityTracker != null) {
-            c.drawText(mProgressTextFormat.format(mProgress), getWidth() / 2,
-                    getHeight() / 2 + mProgressTextPaint.descent(), mProgressTextPaint);
-        }
-    }
-
-    /**
-     * draws the custom text in the center of the view
-     *
-     * @param c
-     */
-    private void drawCustomText(Canvas c) {
-        c.drawText(mProgressText, getWidth() / 2,
-                getHeight() / 2 + mProgressTextPaint.descent(), mProgressTextPaint);
-    }
-
-    /**
-     * draws the background circle with less alpha
-     *
-     * @param c
-     */
-    private void drawWholeCircle(Canvas c) {
-        mRingPaint.setAlpha(mDimAlpha);
-        c.drawCircle(getWidth() / 2, getHeight() / 2, getOuterCircleRadius(), mRingPaint);
-    }
-
-    private void drawInnerCircle(Canvas c) {
-        c.drawCircle(getWidth() / 2, getHeight() / 2, getInnerCircleRadius(), mInnerCirclePaint);
-    }
-
-    private void drawValueArc(Canvas c) {
-        mRingPaint.setAlpha(255);
-        c.drawArc(mCircleBox, mAngle - 105, 30, true, mRingPaint);
-    }
-
-    /**
-     * sets up the bounds of the view
-     */
-    private void initBox() {
-        int width = getWidth();
-        int height = getHeight();
-
-        float diameter = getDiameter();
-
-        mCircleBox.set(width / 2 - diameter / 2, height / 2 - diameter / 2, width / 2
-                + diameter / 2, height / 2 + diameter / 2);
-    }
-
-    /**
-     * returns the diameter of the drawn circle/arc
-     *
-     * @return
-     */
-    private float getDiameter() {
-        return Math.min(getWidth(), getHeight());
-    }
-
-    /**
-     * returns the radius of the drawn outer circle
-     *
-     * @return
-     */
-    private float getOuterCircleRadius() {
-        return getDiameter() / 2f;
-    }
-
-    /**
-     * returns the radius of the drawn inner circle
-     *
-     * @return
-     */
-    private float getInnerCircleRadius() {
-        return getOuterCircleRadius() * (1 - mRingWidthFactor);
-    }
-
-    /**
-     * calculates the needed angle for a given value
-     *
-     * @param percent
-     * @return
-     */
-    private float calcAngle(float percent) {
-        return percent / 100f * 360f;
-    }
-
-    /**
-     * returns the center point of the view in pixels
-     *
-     * @return
-     */
-    private PointF getCenter() {
-        return new PointF(getWidth() / 2, getHeight() / 2);
-    }
-
-    @Override
-    protected void onSizeChanged(int xNew, int yNew, int xOld, int yOld){
-        super.onSizeChanged(xNew, yNew, xOld, yOld);
-
-        initBox();
-        mAngularVelocityTracker = new AngularVelocityTracker(getCenter().x, getCenter().y);
-    }
-
+    //region Touches
     @Override
     public boolean onTouchEvent(MotionEvent e) {
         if (mEnabled) {
@@ -347,127 +247,27 @@ public class CircularSeekBar extends View implements OnGestureListener {
             return super.onTouchEvent(e);
     }
 
-    /**
-     * updates the display with the given touch position, takes stepsize into
-     * consideration
-     *
-     * @param x
-     * @param y
-     */
-    private void updateValue(float x, float y, float speed) {
+    private class GestureListener extends GestureDetector.SimpleOnGestureListener {
+        @Override
+        public boolean onSingleTapUp(MotionEvent e) {
+            float x = e.getX();
+            float y = e.getY();
 
-        // calculate the touch-angle
-        float angle = getAngleForPoint(x, y);
+            // get the distance from the touch to the center of the view
+            float distance = distanceToCenter(x, y);
+            float r = getOuterCircleRadius();
 
-        // calculate the new value depending on angle
-        float newVal = mProgress + mMaxValue / 100 * speed * mSpeedMultiplier;
-        newVal = Math.min(newVal, mMaxValue);
-        newVal = Math.max(newVal, mMinValue);
-
-        mProgress = newVal;
-        mAngle = angle;
-    }
-
-    @Override
-    public boolean onSingleTapUp(MotionEvent e) {
-        float x = e.getX();
-        float y = e.getY();
-
-        // get the distance from the touch to the center of the view
-        float distance = distanceToCenter(x, y);
-        float r = getOuterCircleRadius();
-
-        // touch gestures only work when touches are made exactly on the
-        // bar/arc
-        if (distance <= r - r * mRingWidthFactor) {
-            if (mOnCenterClickedListener != null)
-                mOnCenterClickedListener.onCenterClicked(this, mProgress);
+            // touch gestures only work when touches are made exactly on the bar/arc
+            if (mOnCenterClickedListener != null
+                    && distance <= r - r * mRingWidthFactor) {
+                mOnCenterClickedListener.onCenterClicked(CircularSeekBar.this, mProgress);
+            }
+            return false;
         }
-        return false;
     }
+    //endregion
 
-    /**
-     * returns the angle relative to the view center for the given point on the
-     * chart in degrees. The angle is always between 0 and 360°, 0° is NORTH
-     *
-     * @param x
-     * @param y
-     * @return
-     */
-    private float getAngleForPoint(float x, float y) {
-        PointF c = getCenter();
-        return (float) -Math.toDegrees(Math.atan2(c.x - x, c.y - y));
-    }
-
-    /**
-     * returns the distance of a certain point on the view to the center of the
-     * view
-     *
-     * @param x
-     * @param y
-     * @return
-     */
-    private float distanceToCenter(float x, float y) {
-        PointF c = getCenter();
-        return (float) Math.sqrt(Math.pow(x - c.x, 2.0) + Math.pow(y - c.y, 2.0));
-    }
-
-    @Override
-    public boolean onDown(MotionEvent e) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public void onLongPress(MotionEvent e) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public void onShowPress(MotionEvent e) {
-        // TODO Auto-generated method stub
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    //region Public listener
     /**
      * set a selection listener for the circle-display that is called whenever a
      * value is selected onTouch()
@@ -481,65 +281,9 @@ public class CircularSeekBar extends View implements OnGestureListener {
     public void setOnCenterClickedListener(@Nullable OnCenterClickedListener l) {
         mOnCenterClickedListener = l;
     }
+    //endregion
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    //region Public attribute
     public void setIndicator(boolean enabled) {
         mShowIndicator = enabled;
         invalidate();
@@ -708,7 +452,9 @@ public class CircularSeekBar extends View implements OnGestureListener {
         mRingPaint = paint;
         invalidate();
     }
+    //endregion
 
+    //region Public mutator
     public void setInnerCirclePaint(@NonNull Paint paint) {
         mInnerCirclePaint = paint;
         invalidate();
@@ -737,4 +483,154 @@ public class CircularSeekBar extends View implements OnGestureListener {
     public NumberFormat getProgressTextFormat() {
         return mProgressTextFormat;
     }
+    //endregion
+
+    //region Private
+    /**
+     * draws the text in the center of the view
+     *
+     * @param c
+     */
+    private void drawText(Canvas c) {
+        if (mAngularVelocityTracker != null) {
+            c.drawText(mProgressTextFormat.format(mProgress), getWidth() / 2,
+                    getHeight() / 2 + mProgressTextPaint.descent(), mProgressTextPaint);
+        }
+    }
+
+    /**
+     * draws the custom text in the center of the view
+     *
+     * @param c
+     */
+    private void drawCustomText(Canvas c) {
+        c.drawText(mProgressText, getWidth() / 2,
+                getHeight() / 2 + mProgressTextPaint.descent(), mProgressTextPaint);
+    }
+
+    /**
+     * draws the background circle with less alpha
+     *
+     * @param c
+     */
+    private void drawWholeCircle(Canvas c) {
+        mRingPaint.setAlpha(mDimAlpha);
+        c.drawCircle(getWidth() / 2, getHeight() / 2, getOuterCircleRadius(), mRingPaint);
+    }
+
+    private void drawInnerCircle(Canvas c) {
+        c.drawCircle(getWidth() / 2, getHeight() / 2, getInnerCircleRadius(), mInnerCirclePaint);
+    }
+
+    private void drawProgressArc(Canvas c) {
+        mRingPaint.setAlpha(255);
+        c.drawArc(mCircleBox, mAngle - 105, 30, true, mRingPaint);
+    }
+
+    /**
+     * sets up the bounds of the view
+     */
+    private void initBox() {
+        int width = getWidth();
+        int height = getHeight();
+
+        float diameter = getDiameter();
+
+        mCircleBox.set(width / 2 - diameter / 2, height / 2 - diameter / 2, width / 2
+                + diameter / 2, height / 2 + diameter / 2);
+    }
+
+    /**
+     * returns the diameter of the drawn circle/arc
+     *
+     * @return
+     */
+    private float getDiameter() {
+        return Math.min(getWidth(), getHeight());
+    }
+
+    /**
+     * returns the radius of the drawn outer circle
+     *
+     * @return
+     */
+    private float getOuterCircleRadius() {
+        return getDiameter() / 2f;
+    }
+
+    /**
+     * returns the radius of the drawn inner circle
+     *
+     * @return
+     */
+    private float getInnerCircleRadius() {
+        return getOuterCircleRadius() * (1 - mRingWidthFactor);
+    }
+
+    /**
+     * calculates the needed angle for a given value
+     *
+     * @param percent
+     * @return
+     */
+    private float calcAngle(float percent) {
+        return percent / 100f * 360f;
+    }
+
+    /**
+     * returns the center point of the view in pixels
+     *
+     * @return
+     */
+    private PointF getCenter() {
+        return new PointF(getWidth() / 2, getHeight() / 2);
+    }
+
+    /**
+     * updates the display with the given touch position, takes stepsize into
+     * consideration
+     *
+     * @param x
+     * @param y
+     */
+    private void updateValue(float x, float y, float speed) {
+
+        // calculate the touch-angle
+        float angle = getAngleForPoint(x, y);
+
+        // calculate the new value depending on angle
+        float newVal = mProgress + mMaxValue / 100 * speed * mSpeedMultiplier;
+        newVal = Math.min(newVal, mMaxValue);
+        newVal = Math.max(newVal, mMinValue);
+
+        mProgress = newVal;
+        mAngle = angle;
+    }
+
+    /**
+     * returns the angle relative to the view center for the given point on the
+     * chart in degrees. The angle is always between 0 and 360°, 0° is NORTH
+     *
+     * @param x
+     * @param y
+     * @return
+     */
+    private float getAngleForPoint(float x, float y) {
+        PointF c = getCenter();
+        return (float) -Math.toDegrees(Math.atan2(c.x - x, c.y - y));
+    }
+
+    /**
+     * returns the distance of a certain point on the view to the center of the
+     * view
+     *
+     * @param x
+     * @param y
+     * @return
+     */
+    private float distanceToCenter(float x, float y) {
+        PointF c = getCenter();
+        return (float) Math.sqrt(Math.pow(x - c.x, 2.0) + Math.pow(y - c.y, 2.0));
+    }
+    //endregion
 }
