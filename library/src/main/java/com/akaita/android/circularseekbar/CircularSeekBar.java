@@ -325,7 +325,6 @@ public class CircularSeekBar extends View {
     }
 
     public void setProgress(float progress) {
-        mAngle = getAngle(progress / mMaxValue * 100f);
         mProgress = progress;
         if (mOnCircularSeekBarChangeListener != null) {
             mOnCircularSeekBarChangeListener.onProgressChanged(this, mProgress, false);
@@ -577,16 +576,6 @@ public class CircularSeekBar extends View {
     }
 
     /**
-     * calculates the needed angle for a given value
-     *
-     * @param percent
-     * @return
-     */
-    private float getAngle(float percent) {
-        return percent / 100f * 360f;
-    }
-
-    /**
      * returns the center point of the view in pixels
      *
      * @return
@@ -603,17 +592,14 @@ public class CircularSeekBar extends View {
      * @param y
      */
     private void updateProgress(float x, float y, float speed) {
-
         // calculate the touch-angle
-        float angle = getAngle(x, y);
+        mAngle = getAngle(x, y);
 
         // calculate the new value depending on angle
         float newVal = mProgress + mMaxValue / 100 * speed * mSpeedMultiplier;
         newVal = Math.min(newVal, mMaxValue);
         newVal = Math.max(newVal, mMinValue);
-
         mProgress = newVal;
-        mAngle = angle;
     }
 
     /**

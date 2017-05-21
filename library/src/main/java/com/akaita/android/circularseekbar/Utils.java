@@ -9,6 +9,8 @@ import android.util.DisplayMetrics;
 
 class Utils {
 
+    private Utils() {}
+
     /**
      * This method converts dp unit to equivalent pixels, depending on
      * device density.

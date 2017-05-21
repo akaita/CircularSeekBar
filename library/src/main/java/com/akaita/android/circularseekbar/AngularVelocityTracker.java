@@ -19,12 +19,12 @@ class AngularVelocityTracker {
     private final float mCentreX;
     private final float mCentreY;
 
-    public AngularVelocityTracker(float centreX, float centreY){
+    AngularVelocityTracker(float centreX, float centreY){
         mCentreX = centreX;
         mCentreY = centreY;
     }
 
-    public void addMovement(MotionEvent event){
+    void addMovement(MotionEvent event){
         mInitialX = mFinalX;
         mInitialY = mFinalY;
         mInitialTime = mFinalTime;
@@ -33,7 +33,7 @@ class AngularVelocityTracker {
         mFinalTime = event.getEventTime();
     }
 
-    public float getAngularVelocity(){
+    float getAngularVelocity(){
         float retVal = 0;
         if (mInitialTime != mFinalTime){
             long timeLapse = mInitialTime - mFinalTime;
@@ -47,7 +47,7 @@ class AngularVelocityTracker {
         return retVal;
     }
 
-    public void clear(){
+    void clear(){
         mInitialX = 0;
         mInitialY = 0;
         mInitialTime =0;
@@ -59,5 +59,4 @@ class AngularVelocityTracker {
     private float calcAngle(float x, float y) {
         return (float) Math.toDegrees(Math.atan2(mCentreX - x, mCentreY - y));
     }
-
 }
