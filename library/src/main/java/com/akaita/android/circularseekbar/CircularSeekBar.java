@@ -22,13 +22,13 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
 /**
- * Simple custom-view for displaying values (with and without animation) and
- * selecting values onTouch().
+ * Displays a touchable and circular SeekBar, an optional central circle
+ * and a customizable text in the center.
+ * The faster the user moves the finger across the CircularSeekBar, the faster the progress changes.
  */
 public class CircularSeekBar extends View {
     /**
-     * listener for callbacks when selecting values ontouch
-     *
+     * Listen for touch-events on the ring area
      */
     public interface OnCircularSeekBarChangeListener {
         void onProgressChanged(CircularSeekBar seekBar, float progress, boolean fromUser);
@@ -38,6 +38,9 @@ public class CircularSeekBar extends View {
         void onStopTrackingTouch(CircularSeekBar seekBar);
     }
 
+    /**
+     * Listen for singletap-events on the inner circle area
+     */
     public interface OnCenterClickedListener {
         void onCenterClicked(CircularSeekBar seekBar, float progress);
     }
@@ -251,23 +254,29 @@ public class CircularSeekBar extends View {
 
     //region Public listener
     /**
-     * set a selection listener for the circle-display that is called whenever a
-     * value is selected onTouch()
-     *
+     * Set a listener for touch-events related to the outer ring of the CircularSeekBar
      * @param listener
      */
     public void setOnCircularSeekBarChangeListener(@Nullable OnCircularSeekBarChangeListener listener) {
         mOnCircularSeekBarChangeListener = listener;
     }
 
+    /**
+     * Set a listener for singletap-events related to the central ring of the CircularSeekBar
+     * @param listener
+     */
     public void setOnCenterClickedListener(@Nullable OnCenterClickedListener listener) {
         mOnCenterClickedListener = listener;
     }
     //endregion
 
     //region Public attribute
-    public void setIndicator(boolean enabled) {
-        mShowIndicator = enabled;
+    /**
+     * Enable/disable the visual indicator shown under the touched area
+     * @param enable
+     */
+    public void setIndicator(boolean enable) {
+        mShowIndicator = enable;
         invalidate();
     }
 
@@ -275,6 +284,10 @@ public class CircularSeekBar extends View {
         return mShowIndicator;
     }
 
+    /**
+     * Minimum possible value of the progress
+     * @param min
+     */
     public void setMin(float min) {
         mMinValue = min;
         setProgress(Math.min(mMinValue, mProgress));
@@ -284,6 +297,10 @@ public class CircularSeekBar extends View {
         return mMinValue;
     }
 
+    /**
+     * Maximum possible value of the progress
+     * @param max
+     */
     public void setMax(float max) {
         mMaxValue = max;
         setProgress(Math.max(mMaxValue, mProgress));
@@ -293,6 +310,10 @@ public class CircularSeekBar extends View {
         return mMaxValue;
     }
 
+    /**
+     * Accelerate or decelerate the change in progress relative to the user's circular scrolling movement
+     * @param speedMultiplier 0-1 to decrease change, 1+ to increase change
+     */
     public void setSpeedMultiplier(@FloatRange(from=0) float speedMultiplier) {
         mSpeedMultiplier = speedMultiplier;
     }
@@ -301,6 +322,10 @@ public class CircularSeekBar extends View {
         return mSpeedMultiplier;
     }
 
+    /**
+     * Set current value of the progress
+     * @param progress
+     */
     public void setProgress(float progress) {
         mProgress = progress;
         if (mOnCircularSeekBarChangeListener != null) {
@@ -320,15 +345,11 @@ public class CircularSeekBar extends View {
     }
 
     /**
-     * Enable touch gestures on the circle-display. If enabled, selecting values
-     * onTouch() is possible. Set a OnCircularSeekBarChangeListener to retrieve selected
-     * values. Do not forget to set a value before selecting values. By default
-     * the maxvalue is 0f and therefore nothing can be selected.
-     *
-     * @param enabled
+     * Enable touch gestures on the CircularSeekBar
+     * @param enable
      */
-    public void setEnabled(boolean enabled) {
-        mEnabled = enabled;
+    public void setEnabled(boolean enable) {
+        mEnabled = enable;
         invalidate();
     }
 
@@ -337,8 +358,7 @@ public class CircularSeekBar extends View {
     }
 
     /**
-     * set the drawing of the center text to be enabled or not
-     *
+     * Draw a text with the current progress in the center of the view
      * @param enabled
      */
     public void setProgressText(boolean enabled) {
@@ -351,8 +371,7 @@ public class CircularSeekBar extends View {
     }
 
     /**
-     * set the thickness of the value bar as a factor of the total width, default 0.5
-     *
+     * Set the thickness of the outer ring (touchable area), relative to the size of the whole view
      * @param factor
      */
     public void setRingWidthFactor(@FloatRange(from=0f,to=1f) float factor) {
@@ -365,10 +384,7 @@ public class CircularSeekBar extends View {
     }
 
     /**
-     * Set an array of custom texts to be drawn instead of the value in the
-     * center of the CircleDisplay. If set to null, the custom text will be
-     * reset and the value will be drawn. Make sure the length of the array corresponds with the maximum number of steps (set with setStepSize(float stepsize).
-     *
+     * Set fixed text to be drawn in the center of the view
      * @param text
      */
     public void setProgressText(@Nullable String text) {
@@ -376,29 +392,27 @@ public class CircularSeekBar extends View {
         invalidate();
     }
 
-    public String getProgressText() {
+    public @Nullable String getProgressText() {
         return mProgressText;
     }
 
     /**
-     * set this to true to draw the inner circle, default: true
-     *
-     * @param enabled
+     * Enable/disable inner circle display
+     * @param enable
      */
-    public void setInnerCircle(boolean enabled) {
-        mShowInnerCircle = enabled;
+    public void setInnerCircle(boolean enable) {
+        mShowInnerCircle = enable;
         invalidate();
     }
 
-    /**
-     * returns true if drawing the inner circle is enabled, false if not
-     *
-     * @return
-     */
     public boolean isInnerCircleEnabled() {
         return mShowInnerCircle;
     }
 
+    /**
+     * Set color for the outer ring (touchable area)
+     * @param color
+     */
     public void setRingColor(@ColorInt int color) {
         mRingColor = color;
         mRingPaint.setColor(mRingColor);
@@ -441,21 +455,41 @@ public class CircularSeekBar extends View {
     //endregion
 
     //region Public mutator
+    /**
+     * Set the Paint used to draw the outer ring (touchable area)
+     * @param paint
+     */
     public void setRingPaint(@NonNull Paint paint) {
         mRingPaint = paint;
         invalidate();
     }
 
+    /**
+     * Set the Paint used to draw the inner circle
+     * @param paint
+     */
     public void setInnerCirclePaint(@NonNull Paint paint) {
         mInnerCirclePaint = paint;
         invalidate();
     }
 
+    /**
+     * Set the Paint used to draw the progress text or fixed custom text
+     * @param paint
+     */
     public void setProgressTextPaint(@NonNull Paint paint) {
         mProgressTextPaint = paint;
         invalidate();
     }
 
+    /**
+     * Set the format of the progress text. <br/>
+     * <ul>
+     *     <li>"###,###,###,##0.0" will display: 1,234.5</li>
+     *     <li>"###,###,###,##0.00" will display: 1,234.56</li>
+     * <ul/>
+     * @param format
+     */
     public void setProgressTextFormat(@NonNull NumberFormat format) {
         mProgressTextFormat = format;
         invalidate();
