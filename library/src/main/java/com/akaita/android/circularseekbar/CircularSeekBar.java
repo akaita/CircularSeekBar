@@ -191,70 +191,75 @@ public class CircularSeekBar extends View {
 
     //region Touches
     @Override
-    public boolean onTouchEvent(MotionEvent e) {
+    public boolean onTouchEvent(MotionEvent event) {
         if (mEnabled) {
             // if the detector recognized a gesture, consume it
-            if (mGestureDetector.onTouchEvent(e))
+            if (mGestureDetector.onTouchEvent(event)) {
                 return true;
-
-            float x = e.getX();
-            float y = e.getY();
+            }
 
             // get the distance from the touch to the center of the view
-            float distance = distanceToCenter(x, y);
+            float distance = distanceToCenter(event.getX(), event.getY());
             float outerCircleRadius = getOuterCircleRadius();
             float innerCircleRadius = getInnerCircleRadius();
 
-            // touch gestures only work when touches are made exactly on the
-            // bar/arc
+            // touch gestures only work when touches are made exactly on the bar/arc
             if (distance >= innerCircleRadius && distance < outerCircleRadius) {
-
-                switch (e.getAction()) {
-
+                switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         mTouching = true;
-                        mAngularVelocityTracker.clear();
-                        updateValue(x, y, mAngularVelocityTracker.getAngularVelocity());
-                        invalidate();
-                        if (mOnCircularSeekBarChangeListener != null)
-                            mOnCircularSeekBarChangeListener.onStartTrackingTouch(this);
+                        trackTouchStart(event);
                         break;
                     case MotionEvent.ACTION_MOVE:
                         mTouching = true;
-                        mAngularVelocityTracker.addMovement(e);
-                        updateValue(x, y, mAngularVelocityTracker.getAngularVelocity());
-                        invalidate();
-                        if (mOnCircularSeekBarChangeListener != null)
-                            mOnCircularSeekBarChangeListener.onProgressChanged(this, mProgress, true);
+                        trackTouchMove(event);
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         mTouching = false;
-                        mAngularVelocityTracker.clear();
-                        invalidate();
-                        if (mOnCircularSeekBarChangeListener != null)
-                            mOnCircularSeekBarChangeListener.onStopTrackingTouch(this);
+                        trackTouchStop();
                         break;
                 }
             } else {
                 mTouching = false;
                 mAngularVelocityTracker.clear();
-                invalidate();
             }
 
+            invalidate();
             return true;
-        } else
-            return super.onTouchEvent(e);
+        } else {
+            return super.onTouchEvent(event);
+        }
+    }
+
+    private void trackTouchStart(MotionEvent event) {
+        mAngularVelocityTracker.clear();
+        updateProgress(event.getX(), event.getY(), mAngularVelocityTracker.getAngularVelocity());
+        if (mOnCircularSeekBarChangeListener != null) {
+            mOnCircularSeekBarChangeListener.onStartTrackingTouch(this);
+        }
+    }
+
+    private void trackTouchMove(MotionEvent event) {
+        mAngularVelocityTracker.addMovement(event);
+        updateProgress(event.getX(), event.getY(), mAngularVelocityTracker.getAngularVelocity());
+        if (mOnCircularSeekBarChangeListener != null) {
+            mOnCircularSeekBarChangeListener.onProgressChanged(this, mProgress, true);
+        }
+    }
+
+    private void trackTouchStop() {
+        mAngularVelocityTracker.clear();
+        if (mOnCircularSeekBarChangeListener != null) {
+            mOnCircularSeekBarChangeListener.onStopTrackingTouch(this);
+        }
     }
 
     private class GestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
-        public boolean onSingleTapUp(MotionEvent e) {
-            float x = e.getX();
-            float y = e.getY();
-
+        public boolean onSingleTapUp(MotionEvent event) {
             // get the distance from the touch to the center of the view
-            float distance = distanceToCenter(x, y);
+            float distance = distanceToCenter(event.getX(), event.getY());
             float r = getOuterCircleRadius();
 
             // touch gestures only work when touches are made exactly on the bar/arc
@@ -272,14 +277,14 @@ public class CircularSeekBar extends View {
      * set a selection listener for the circle-display that is called whenever a
      * value is selected onTouch()
      *
-     * @param l
+     * @param listener
      */
-    public void setOnCircularSeekBarChangeListener(@Nullable OnCircularSeekBarChangeListener l) {
-        mOnCircularSeekBarChangeListener = l;
+    public void setOnCircularSeekBarChangeListener(@Nullable OnCircularSeekBarChangeListener listener) {
+        mOnCircularSeekBarChangeListener = listener;
     }
 
-    public void setOnCenterClickedListener(@Nullable OnCenterClickedListener l) {
-        mOnCenterClickedListener = l;
+    public void setOnCenterClickedListener(@Nullable OnCenterClickedListener listener) {
+        mOnCenterClickedListener = listener;
     }
     //endregion
 
@@ -320,7 +325,7 @@ public class CircularSeekBar extends View {
     }
 
     public void setProgress(float progress) {
-        mAngle = calcAngle(progress / mMaxValue * 100f);
+        mAngle = getAngle(progress / mMaxValue * 100f);
         mProgress = progress;
         if (mOnCircularSeekBarChangeListener != null) {
             mOnCircularSeekBarChangeListener.onProgressChanged(this, mProgress, false);
@@ -452,6 +457,16 @@ public class CircularSeekBar extends View {
         mRingPaint = paint;
         invalidate();
     }
+
+    public void setProgressTextSize(@FloatRange(from=0) float pixels) {
+        mProgressTextSize = pixels;
+        mProgressTextPaint.setTextSize(mProgressTextSize);
+        invalidate();
+    }
+
+    public float getProgressTextSize() {
+        return mProgressTextSize;
+    }
     //endregion
 
     //region Public mutator
@@ -463,16 +478,6 @@ public class CircularSeekBar extends View {
     public void setProgressTextPaint(@NonNull Paint paint) {
         mProgressTextPaint = paint;
         invalidate();
-    }
-
-    public void setProgressTextSize(@FloatRange(from=0) float pixels) {
-        mProgressTextSize = pixels;
-        mProgressTextPaint.setTextSize(mProgressTextSize);
-        invalidate();
-    }
-
-    public float getProgressTextSize() {
-        return mProgressTextSize;
     }
 
     public void setProgressTextFormat(@NonNull NumberFormat format) {
@@ -493,8 +498,10 @@ public class CircularSeekBar extends View {
      */
     private void drawText(Canvas c) {
         if (mAngularVelocityTracker != null) {
-            c.drawText(mProgressTextFormat.format(mProgress), getWidth() / 2,
-                    getHeight() / 2 + mProgressTextPaint.descent(), mProgressTextPaint);
+            c.drawText(mProgressTextFormat.format(mProgress),
+                    getWidth() / 2,
+                    getHeight() / 2 + mProgressTextPaint.descent(),
+                    mProgressTextPaint);
         }
     }
 
@@ -504,8 +511,10 @@ public class CircularSeekBar extends View {
      * @param c
      */
     private void drawCustomText(Canvas c) {
-        c.drawText(mProgressText, getWidth() / 2,
-                getHeight() / 2 + mProgressTextPaint.descent(), mProgressTextPaint);
+        c.drawText(mProgressText,
+                getWidth() / 2,
+                getHeight() / 2 + mProgressTextPaint.descent(),
+                mProgressTextPaint);
     }
 
     /**
@@ -573,7 +582,7 @@ public class CircularSeekBar extends View {
      * @param percent
      * @return
      */
-    private float calcAngle(float percent) {
+    private float getAngle(float percent) {
         return percent / 100f * 360f;
     }
 
@@ -593,10 +602,10 @@ public class CircularSeekBar extends View {
      * @param x
      * @param y
      */
-    private void updateValue(float x, float y, float speed) {
+    private void updateProgress(float x, float y, float speed) {
 
         // calculate the touch-angle
-        float angle = getAngleForPoint(x, y);
+        float angle = getAngle(x, y);
 
         // calculate the new value depending on angle
         float newVal = mProgress + mMaxValue / 100 * speed * mSpeedMultiplier;
@@ -615,7 +624,7 @@ public class CircularSeekBar extends View {
      * @param y
      * @return
      */
-    private float getAngleForPoint(float x, float y) {
+    private float getAngle(float x, float y) {
         PointF c = getCenter();
         return (float) -Math.toDegrees(Math.atan2(c.x - x, c.y - y));
     }
