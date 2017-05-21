@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CircularSeekBar">
+        <attr name="enabled" format="boolean" />
+        <attr name="showIndicator" format="boolean" />
+        <attr name="min" format="float" />
+        <attr name="max" format="float" />
+        <attr name="speedMultiplier" format="float" />
+        <attr name="progress" format="float" />
+        <attr name="showProgressText" format="boolean" />
+        <attr name="ringWidth" format="float" />
+        <attr name="progressText" format="string" />
+        <attr name="showInnerCircle" format="boolean" />
+        <attr name="ringColor" format="color" />
+        <attr name="innerCircleColor" format="color" />
+        <attr name="progressTextColor" format="color" />
+        <attr name="progressTextSize" format="float" />
+    </declare-styleable>
+</resources>

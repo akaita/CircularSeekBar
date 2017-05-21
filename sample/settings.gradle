@@ -1,0 +1,2 @@
+include ':mobile', ':wear', ':library'
+project(":library").projectDir = file("../library")
