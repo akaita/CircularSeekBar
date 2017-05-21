@@ -161,7 +161,7 @@ public class CircularSeekBar extends View {
     protected void onSizeChanged(int xNew, int yNew, int xOld, int yOld){
         super.onSizeChanged(xNew, yNew, xOld, yOld);
 
-        initBox();
+        initViewBox();
         mAngularVelocityTracker = new AngularVelocityTracker(getCenter().x, getCenter().y);
     }
 
@@ -183,7 +183,7 @@ public class CircularSeekBar extends View {
             if (mProgressText != null) {
                 drawCustomText(canvas);
             } else {
-                drawText(canvas);
+                drawProgressText(canvas);
             }
         }
     }
@@ -452,11 +452,6 @@ public class CircularSeekBar extends View {
         return mProgressTextColor;
     }
 
-    public void setRingPaint(@NonNull Paint paint) {
-        mRingPaint = paint;
-        invalidate();
-    }
-
     public void setProgressTextSize(@FloatRange(from=0) float pixels) {
         mProgressTextSize = pixels;
         mProgressTextPaint.setTextSize(mProgressTextSize);
@@ -469,6 +464,11 @@ public class CircularSeekBar extends View {
     //endregion
 
     //region Public mutator
+    public void setRingPaint(@NonNull Paint paint) {
+        mRingPaint = paint;
+        invalidate();
+    }
+
     public void setInnerCirclePaint(@NonNull Paint paint) {
         mInnerCirclePaint = paint;
         invalidate();
@@ -489,38 +489,7 @@ public class CircularSeekBar extends View {
     }
     //endregion
 
-    //region Private
-    /**
-     * draws the text in the center of the view
-     *
-     * @param c
-     */
-    private void drawText(Canvas c) {
-        if (mAngularVelocityTracker != null) {
-            c.drawText(mProgressTextFormat.format(mProgress),
-                    getWidth() / 2,
-                    getHeight() / 2 + mProgressTextPaint.descent(),
-                    mProgressTextPaint);
-        }
-    }
-
-    /**
-     * draws the custom text in the center of the view
-     *
-     * @param c
-     */
-    private void drawCustomText(Canvas c) {
-        c.drawText(mProgressText,
-                getWidth() / 2,
-                getHeight() / 2 + mProgressTextPaint.descent(),
-                mProgressTextPaint);
-    }
-
-    /**
-     * draws the background circle with less alpha
-     *
-     * @param c
-     */
+    //region Private draw
     private void drawWholeCircle(Canvas c) {
         mRingPaint.setAlpha(mDimAlpha);
         c.drawCircle(getWidth() / 2, getHeight() / 2, getOuterCircleRadius(), mRingPaint);
@@ -535,13 +504,27 @@ public class CircularSeekBar extends View {
         c.drawArc(mCircleBox, mAngle - 105, 30, true, mRingPaint);
     }
 
-    /**
-     * sets up the bounds of the view
-     */
-    private void initBox() {
+    private void drawProgressText(Canvas c) {
+        if (mAngularVelocityTracker != null) {
+            c.drawText(mProgressTextFormat.format(mProgress),
+                    getWidth() / 2,
+                    getHeight() / 2 + mProgressTextPaint.descent(),
+                    mProgressTextPaint);
+        }
+    }
+
+    private void drawCustomText(Canvas c) {
+        c.drawText(mProgressText,
+                getWidth() / 2,
+                getHeight() / 2 + mProgressTextPaint.descent(),
+                mProgressTextPaint);
+    }
+    //endregion
+
+    //region Private
+    private void initViewBox() {
         int width = getWidth();
         int height = getHeight();
-
         float diameter = getDiameter();
 
         mCircleBox.set(width / 2 - diameter / 2, height / 2 - diameter / 2, width / 2
@@ -549,44 +532,7 @@ public class CircularSeekBar extends View {
     }
 
     /**
-     * returns the diameter of the drawn circle/arc
-     *
-     * @return
-     */
-    private float getDiameter() {
-        return Math.min(getWidth(), getHeight());
-    }
-
-    /**
-     * returns the radius of the drawn outer circle
-     *
-     * @return
-     */
-    private float getOuterCircleRadius() {
-        return getDiameter() / 2f;
-    }
-
-    /**
-     * returns the radius of the drawn inner circle
-     *
-     * @return
-     */
-    private float getInnerCircleRadius() {
-        return getOuterCircleRadius() * (1 - mRingWidthFactor);
-    }
-
-    /**
-     * returns the center point of the view in pixels
-     *
-     * @return
-     */
-    private PointF getCenter() {
-        return new PointF(getWidth() / 2, getHeight() / 2);
-    }
-
-    /**
-     * updates the display with the given touch position, takes stepsize into
-     * consideration
+     * update display with the given touch position
      *
      * @param x
      * @param y
@@ -602,27 +548,34 @@ public class CircularSeekBar extends View {
         mProgress = newVal;
     }
 
+    private float getDiameter() {
+        return Math.min(getWidth(), getHeight());
+    }
+
+    private float getOuterCircleRadius() {
+        return getDiameter() / 2f;
+    }
+
+    private float getInnerCircleRadius() {
+        return getOuterCircleRadius() * (1 - mRingWidthFactor);
+    }
+
+    private PointF getCenter() {
+        return new PointF(getWidth() / 2, getHeight() / 2);
+    }
+
     /**
-     * returns the angle relative to the view center for the given point on the
-     * chart in degrees. The angle is always between 0 and 360°, 0° is NORTH
+     * return angle relative to the view center for the given point on the chart in degrees.
      *
      * @param x
      * @param y
-     * @return
+     * @return angle in degrees. 0° is NORTH
      */
-    private float getAngle(float x, float y) {
+    private @FloatRange(from=0,to=360) float getAngle(float x, float y) {
         PointF c = getCenter();
         return (float) -Math.toDegrees(Math.atan2(c.x - x, c.y - y));
     }
 
-    /**
-     * returns the distance of a certain point on the view to the center of the
-     * view
-     *
-     * @param x
-     * @param y
-     * @return
-     */
     private float distanceToCenter(float x, float y) {
         PointF c = getCenter();
         return (float) Math.sqrt(Math.pow(x - c.x, 2.0) + Math.pow(y - c.y, 2.0));
