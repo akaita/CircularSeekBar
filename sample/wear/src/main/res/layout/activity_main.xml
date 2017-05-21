@@ -12,7 +12,9 @@
         android:id="@+id/seekbar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_box="all" />
+        app:layout_box="all"
+        app:ringWidth="0.6"
+        app:progressTextSize="16"/>
 
     <TextView
         android:id="@+id/clock"
