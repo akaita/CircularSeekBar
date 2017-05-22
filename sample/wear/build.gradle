@@ -23,5 +23,6 @@ dependencies {
     compile 'com.google.android.support:wearable:2.0.2'
     compile 'com.google.android.gms:play-services-wearable:10.2.6'
     provided 'com.google.android.wearable:wearable:2.0.2'
-    compile project(':library')
+
+    compile 'com.akaita.android:circular-seek-bar:1.0'
 }

@@ -1,2 +1,1 @@
-include ':mobile', ':wear', ':library'
-project(":library").projectDir = file("../library")
+include ':mobile', ':wear'
