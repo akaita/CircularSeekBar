@@ -51,6 +51,6 @@ ProgressTextPaint    //Paint used to draw the text in the center
 ProgressTextFormat    //Format of the text in the center
 ```
 
-## Apps using it
+## Apps using CircularSeekBar
 
  - [F-gas](https://play.google.com/store/apps/details?id=com.akaita.fgas): a simple tool to help you comply with the new EU Regulation 517/2014 on fluorinated gases with just one hand!
