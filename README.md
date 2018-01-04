@@ -6,7 +6,9 @@ Very much in the style of old iPods, this is a very intuitive control when a val
 
 ## Screenshots
 
-![mobile](https://github.com/paxku/CircularSeekBar/blob/master/screenshots/mobile.gif "In a mobile phone") ![wearable](https://github.com/paxku/CircularSeekBar/blob/master/screenshots/wear.png "In a wearable device")
+| In a mobile device | In a wearable device |
+| - | - |
+| ![mobile](https://github.com/paxku/CircularSeekBar/blob/master/screenshots/mobile.gif "In a mobile phone") | ![wearable](https://github.com/paxku/CircularSeekBar/blob/master/screenshots/wear.png "In a wearable device") |
 
 ## Usage
 
@@ -21,7 +23,7 @@ dependencies {
 
 ## Configuration
 
-## xml && programmatic
+### xml && programmatic
 
 ```java
 min="0"    //Minimum progree value
@@ -38,7 +40,7 @@ showInnerCircle="true"    //Show/hide the circle in the center
 speedMultiplier="2"    //Make the progress increase/decrease faster/slower
 ```
 
-## programmatic
+### only programmatic
 
 ```java
 OnCircularSeekBarChangeListener    //Listener for events changing the progress
@@ -48,3 +50,7 @@ InnerCirclePaint    //Paint used to draw the inner circle
 ProgressTextPaint    //Paint used to draw the text in the center
 ProgressTextFormat    //Format of the text in the center
 ```
+
+## Apps using it
+
+ - [F-gas](https://play.google.com/store/apps/details?id=com.akaita.fgas): a simple tool to help you comply with the new EU Regulation 517/2014 on fluorinated gases with just one hand!
