@@ -14,7 +14,7 @@ Very much in the style of old iPods, this is a very intuitive control when a val
 
 ```groovy
 repositories {
-    jcenter()
+    mavenCentral()
 }
 dependencies {
     compile 'com.akaita.android:circular-seek-bar:1.0'
